@@ -47,6 +47,8 @@ const STRINGS = {
     'field.grid': 'Rubber sheet',
     'field.heat': 'Heat map',
     'field.note': '⌖ — points where the pulls cancel out',
+    'trails': 'Trails',
+    'trails.title': 'Show trails (T)',
 
     'drag.hint': 'Drag a star to move it',
     'pause': 'Pause',
@@ -61,6 +63,8 @@ const STRINGS = {
     'speed.title': 'Time speed (− / +)',
     'help.button': 'Help (?)',
     'settings.button': 'Start and masses',
+    'ui.hide': 'Hide controls (U)',
+    'ui.show': 'Show controls (U)',
 
     'help.close': 'Close (Esc)',
     'help.heading': 'How it works',
@@ -83,6 +87,8 @@ const STRINGS = {
     'key.shuffle': 'Shuffle masses',
     'key.sound': 'Sound on / off',
     'key.field': 'Gravity field: off / sheet / heat map',
+    'key.ui': 'Hide / show controls',
+    'key.trails': 'Trails on / off',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
     'key.help': 'Show / hide this help',
@@ -130,6 +136,8 @@ const STRINGS = {
     'field.grid': 'Гумове полотно',
     'field.heat': 'Теплова карта',
     'field.note': '⌖ — точки, де притягання врівноважується',
+    'trails': 'Хвости',
+    'trails.title': 'Показувати хвости (T)',
 
     'drag.hint': 'Перетягни зірку, щоб перемістити',
     'pause': 'Пауза',
@@ -144,6 +152,8 @@ const STRINGS = {
     'speed.title': 'Швидкість часу (− / +)',
     'help.button': 'Довідка (?)',
     'settings.button': 'Старт і маси',
+    'ui.hide': 'Сховати елементи керування (U)',
+    'ui.show': 'Показати елементи керування (U)',
 
     'help.close': 'Закрити (Esc)',
     'help.heading': 'Як це працює',
@@ -167,6 +177,8 @@ const STRINGS = {
     'key.shuffle': 'Перемішати маси',
     'key.sound': 'Увімкнути / вимкнути звук',
     'key.field': 'Поле тяжіння: вимк. / полотно / карта',
+    'key.ui': 'Сховати / показати елементи керування',
+    'key.trails': 'Увімкнути / вимкнути хвости',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',
     'key.help': 'Показати / сховати довідку',

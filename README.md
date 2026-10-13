@@ -33,6 +33,8 @@ An interactive simulation of three stars pulling on each other with gravity — 
 | N | Shuffle masses |
 | M | Sound on / off |
 | G | Gravity field: off / rubber sheet / heat map |
+| T | Trails on / off |
+| U | Hide / show the controls |
 | + / − | Faster / slower time |
 | 1 … 9, 0 | Choose a starting configuration |
 | ? / H | Show / hide help |

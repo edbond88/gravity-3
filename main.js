@@ -838,7 +838,7 @@ function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
   drawField();
-  for (const b of bodies) drawTrail(b);
+  if (showTrails) for (const b of bodies) drawTrail(b);
   ctx.globalCompositeOperation = 'lighter';
   drawBursts();
   bodies.forEach((b, i) => drawStar(b, i, frameNow));
@@ -952,6 +952,20 @@ massRanges.forEach((el, i) => {
   el.addEventListener('change', () => (PRESETS[preset].equal ? setPreset('chaos') : restart()));
 });
 document.getElementById('btn-random-masses').addEventListener('click', shuffleMasses);
+const trailsCheckbox = document.getElementById('trails');
+let showTrails = localStorage.getItem('trails') !== 'off';
+
+function setTrails(on) {
+  showTrails = on;
+  trailsCheckbox.checked = on;
+  localStorage.setItem('trails', on ? 'on' : 'off');
+}
+
+trailsCheckbox.addEventListener('change', () => {
+  setTrails(trailsCheckbox.checked);
+  trailsCheckbox.blur(); // keep keyboard shortcuts working
+});
+
 const fieldSelect = document.getElementById('field');
 
 function setField(mode) {
@@ -990,6 +1004,22 @@ new ResizeObserver(() => {
   document.documentElement.style.setProperty('--controls-h', `${controlsEl.offsetHeight}px`);
 }).observe(controlsEl);
 
+const uiBtn = document.getElementById('btn-ui');
+let uiHidden = false; // the camera keeps its framing, so the view doesn't jump
+
+function setUiHidden(hidden) {
+  uiHidden = hidden;
+  if (hidden) setSettings(false);
+  document.body.classList.toggle('ui-hidden', hidden);
+  uiBtn.setAttribute('aria-pressed', String(hidden));
+  uiBtn.title = t(hidden ? 'ui.show' : 'ui.hide');
+}
+
+uiBtn.addEventListener('click', () => {
+  setUiHidden(!uiHidden);
+  uiBtn.blur(); // keep Space for pause, not for pressing this button again
+});
+
 const helpEl = document.getElementById('help');
 
 function setHelp(open) {
@@ -1011,6 +1041,8 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyR') restart();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyN') shuffleMasses();
+  else if (e.code === 'KeyU') setUiHidden(!uiHidden);
+  else if (e.code === 'KeyT') setTrails(!showTrails);
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
     // 1…9, then 0 for the tenth preset
@@ -1107,12 +1139,14 @@ window.addEventListener('resize', resize);
 resize();
 window.addEventListener('langchange', () => {
   pauseBtn.textContent = t(paused ? 'play' : 'pause');
+  uiBtn.title = t(uiHidden ? 'ui.show' : 'ui.hide');
   soundBtn.textContent = t(sound.enabled ? 'sound.on' : 'sound.off');
   presetNote.textContent = t(presetSelect.selectedOptions[0].dataset.note);
 });
 applyLang();
 setSpeed(0);
 setField(fieldMode);
+setTrails(showTrails);
 randomizeMasses();
 reset();
 requestAnimationFrame(frame);
