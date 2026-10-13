@@ -21,7 +21,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 - **Drag stars** — grab any star. Paused, move it somewhere else; running, hold it while the others orbit around it, and throw it — when let go it keeps the speed you gave it. The centre of mass is recomputed.
 - **Sound and light** — close encounters thump, panned to where they happen, and flash with a spray of sparks.
 - **Glow** — bright light bleeds softly into its surroundings, like in a camera (bloom): star cores, white-hot trails and flashes shine.
-- **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. Animation is toned down when the system asks for reduced motion.
+- **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. The background is modelled on the real sky: thousands of faint stars and a few bright ones with tiny spikes, mostly white and yellowish with some orange and blue, gathered into clouds. Animation is toned down when the system asks for reduced motion.
 - **Auto-restart** — when a star escapes, a new system starts.
 - **Built-in help** — press **?** for a short guide and the list of shortcuts.
 - **English and Ukrainian** — switch the language in the top-right corner. The choice is remembered; on the first visit it follows the browser's language.

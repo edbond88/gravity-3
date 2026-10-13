@@ -1,17 +1,51 @@
 // ---------------------------------------------------------------------------
 // Background: a nebula and three layers of distant stars. Each layer follows
 // the camera's zoom and offset by a different amount, so the sky has depth.
+// Like the real sky: thousands of faint stars and a few bright ones, which get
+// tiny diffraction spikes and are bright enough for the bloom to make glow;
+// mostly white and yellowish, some orange, some blue; gathered into clouds.
 // ---------------------------------------------------------------------------
 import { BufferAttribute, BufferGeometry, CanvasTexture, DynamicDrawUsage, NearestFilter, Points } from 'three';
-import { OVER, SCREEN_VERTEX, material, quad } from './common.js';
+import { ADD, OVER, SCREEN_VERTEX, material, quad } from './common.js';
 
+// size: the largest width (Gaussian σ, px) a star of the layer gets;
+// bright: the share of its stars that are bright ones.
 const BG_LAYERS = [
-  { depth: 0.08, density: 1 / 3000, rMax: 0.7, alpha: 0.3, drift: 1.5 },
-  { depth: 0.2, density: 1 / 5500, rMax: 1.1, alpha: 0.45, drift: 3 },
-  { depth: 0.4, density: 1 / 16000, rMax: 1.7, alpha: 0.6, drift: 6 },
+  { depth: 0.08, density: 1 / 1700, size: 0.5, alpha: 0.6, bright: 0, drift: 1.5 },
+  { depth: 0.2, density: 1 / 3300, size: 0.7, alpha: 0.85, bright: 0.006, drift: 3 },
+  { depth: 0.4, density: 1 / 10000, size: 0.9, alpha: 1, bright: 0.03, drift: 6 },
 ];
-const TINTS = { warm: [255, 215, 190], cool: [190, 215, 255], plain: [205, 212, 255] };
+
+// Star colours by how common they are: [share, rgb].
+const TINTS = [
+  [0.45, [255, 248, 240]],  // white
+  [0.2, [255, 236, 205]],   // yellowish, like the Sun
+  [0.12, [255, 210, 165]],  // orange
+  [0.05, [255, 180, 150]],  // red
+  [0.13, [215, 228, 255]],  // blue-white
+  [0.05, [180, 205, 255]],  // blue
+];
+
+function tint() {
+  let x = Math.random();
+  for (const [share, rgb] of TINTS) {
+    if ((x -= share) < 0) return rgb;
+  }
+  return TINTS[0][1];
+}
+
+// 0…1 star density over the tile: smooth clouds and gaps. Whole-number
+// frequencies keep it periodic, so tiles join without seams.
+const PHASES = Array.from({ length: 3 }, () => Math.random() * Math.PI * 2);
+function clouds(u, v) {
+  const t = Math.PI * 2;
+  const n = Math.sin(t * (2 * u + v) + PHASES[0]) * Math.sin(t * (u - 2 * v) + PHASES[1])
+    + 0.5 * Math.sin(t * (3 * u + 4 * v) + PHASES[2]);
+  return 0.5 + n / 3;
+}
+
 const MAX_TILES = 9; // a layer zoomed out to half size repeats at most 3 × 3 times
+const MARGIN = 12;   // px — stars this far off screen may still show a spike
 
 const nebulaFragment = /* glsl */ `
   uniform sampler2D uMap;
@@ -19,18 +53,21 @@ const nebulaFragment = /* glsl */ `
   void main() { gl_FragColor = texture2D(uMap, gl_FragCoord.xy / uResolution); }
 `;
 
+// Each star is a Gaussian spot of light; bright ones add a faint cross.
 const starVertex = /* glsl */ `
-  attribute vec4 color; // rgb, alpha
-  attribute float radius;
+  attribute vec4 color;  // rgb, peak brightness (may exceed 1)
+  attribute vec2 shape;  // Gaussian σ in px, spike strength 0…1
   uniform float uDpr;
   varying vec4 vColor;
-  varying float vRadius;
+  varying vec2 vShape;
   varying float vSize;
   void main() {
-    // Below half a pixel a star only gets dimmer: same light, smaller area.
-    vRadius = max(radius, 0.5);
-    vColor = vec4(color.rgb, color.a * min(1.0, pow(radius / 0.5, 2.0)));
-    vSize = 2.0 * vRadius + 2.0;
+    // Narrower than about half a device pixel, a spot would flicker as it drifts
+    // across pixels; widen it instead, keeping the same total light.
+    float sigma = max(shape.x, 0.55 / uDpr);
+    vColor = vec4(color.rgb, color.a * pow(shape.x / sigma, 2.0));
+    vShape = vec2(sigma, shape.y);
+    vSize = ceil(sigma * (6.0 + 14.0 * shape.y)) + 2.0;
     gl_PointSize = vSize * uDpr;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xy, 0.0, 1.0);
   }
@@ -38,12 +75,16 @@ const starVertex = /* glsl */ `
 
 const starFragment = /* glsl */ `
   varying vec4 vColor;
-  varying float vRadius;
+  varying vec2 vShape;
   varying float vSize;
   void main() {
-    float d = length(gl_PointCoord - 0.5) * vSize;
-    float a = vColor.a * clamp(vRadius - d + 0.5, 0.0, 1.0);
-    gl_FragColor = vec4(vColor.rgb * a, a);
+    vec2 p = (gl_PointCoord - 0.5) * vSize;
+    float s = vShape.x;
+    float light = exp(-dot(p, p) / (2.0 * s * s));
+    vec2 q = abs(p);
+    float spikes = exp(-q.y * q.y * 4.0 - q.x / (2.5 * s)) + exp(-q.x * q.x * 4.0 - q.y / (2.5 * s));
+    light += 0.35 * vShape.y * spikes;
+    gl_FragColor = vec4(vColor.rgb * vColor.a * light, 0.0);
   }
 `;
 
@@ -58,7 +99,7 @@ export class Sky {
     this.starUniforms = { uDpr: { value: 1 } };
     this.geometry = new BufferGeometry();
     this.points = new Points(this.geometry, material({
-      vertexShader: starVertex, fragmentShader: starFragment, uniforms: this.starUniforms, blend: OVER,
+      vertexShader: starVertex, fragmentShader: starFragment, uniforms: this.starUniforms, blend: ADD,
     }));
     this.points.frustumCulled = false;
     scene.add(this.points);
@@ -70,22 +111,30 @@ export class Sky {
     for (const layer of BG_LAYERS) {
       const count = Math.round(width * height * layer.density);
       total += count;
-      layer.stars = Array.from({ length: count }, () => ({
-        u: Math.random(),
-        v: Math.random(),
-        r: Math.random() ** 3 * layer.rMax + 0.25,
-        a: layer.alpha * (0.2 + Math.random() * 0.8),
-        tint: Math.random() < 0.15 ? (Math.random() < 0.5 ? TINTS.warm : TINTS.cool) : TINTS.plain,
-        twinkle: Math.random() < 0.25 ? 1 + Math.random() * 2.5 : 0, // Hz, 0 = steady
-        phase: Math.random() * Math.PI * 2,
-      }));
+      layer.stars = Array.from({ length: count }, () => {
+        // where: rejection sampling against the clouds
+        let u, v;
+        do { u = Math.random(); v = Math.random(); } while (Math.random() > 0.15 + 0.85 * clouds(u, v) ** 2);
+        // how bright: most stars faint, a few bright — roughly as star magnitudes go
+        const b = Math.random() ** 3;
+        const bright = Math.random() < layer.bright;
+        return {
+          u, v,
+          size: bright ? 0.7 + 0.3 * Math.random() : 0.35 + layer.size * 0.5 * b,
+          peak: bright ? 1.3 + 1.7 * Math.random() : layer.alpha * (0.22 + 0.78 * b),
+          spike: bright ? 0.6 + 0.4 * Math.random() : 0,
+          tint: tint(),
+          twinkle: Math.random() < 0.3 ? 1 + Math.random() * 2.5 : 0, // Hz, 0 = steady
+          phase: Math.random() * Math.PI * 2,
+        };
+      });
     }
     const n = total * MAX_TILES;
     this.geometry.dispose(); // frees the old buffers on the GPU
     const attr = (size) => new BufferAttribute(new Float32Array(n * size), size).setUsage(DynamicDrawUsage);
     this.geometry.setAttribute('position', attr(2));
     this.geometry.setAttribute('color', attr(4));
-    this.geometry.setAttribute('radius', attr(1));
+    this.geometry.setAttribute('shape', attr(2));
     this.starUniforms.uDpr.value = dpr;
 
     this.paintNebula();
@@ -164,7 +213,7 @@ export class Sky {
     const time = reducedMotion ? 0 : now;
     const pos = this.geometry.getAttribute('position');
     const col = this.geometry.getAttribute('color');
-    const rad = this.geometry.getAttribute('radius');
+    const shp = this.geometry.getAttribute('shape');
     let k = 0;
 
     for (const layer of BG_LAYERS) {
@@ -176,26 +225,26 @@ export class Sky {
       const nx = Math.ceil(width / pw / 2), ny = Math.ceil(height / ph / 2);
       const rs = Math.sqrt(s);
       for (const st of layer.stars) {
-        let a = st.a;
-        if (st.twinkle && time) a *= 0.65 + 0.35 * Math.sin(time * st.twinkle * 2 * Math.PI + st.phase);
+        let a = st.peak;
+        if (st.twinkle && time) a *= 0.7 + 0.3 * Math.sin(time * st.twinkle * 2 * Math.PI + st.phase);
         const bx = wrap((st.u - 0.5) * pw + offX, pw);
         const by = wrap((st.v - 0.5) * ph + offY, ph);
         for (let i = -nx; i <= nx; i++) {
           const x = cx + bx + i * pw;
-          if (x < -2 || x > width + 2) continue;
+          if (x < -MARGIN || x > width + MARGIN) continue;
           for (let j = -ny; j <= ny; j++) {
             const y = cy + by + j * ph;
-            if (y < -2 || y > height + 2) continue;
+            if (y < -MARGIN || y > height + MARGIN) continue;
             pos.array[k * 2] = x; pos.array[k * 2 + 1] = y;
             col.array[k * 4] = st.tint[0] / 255; col.array[k * 4 + 1] = st.tint[1] / 255;
             col.array[k * 4 + 2] = st.tint[2] / 255; col.array[k * 4 + 3] = a;
-            rad.array[k] = st.r * rs;
+            shp.array[k * 2] = st.size * rs; shp.array[k * 2 + 1] = st.spike;
             k++;
           }
         }
       }
     }
-    for (const a of [pos, col, rad]) a.needsUpdate = true;
+    for (const a of [pos, col, shp]) a.needsUpdate = true;
     this.geometry.setDrawRange(0, k);
   }
 }
