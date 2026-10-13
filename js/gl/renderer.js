@@ -2,12 +2,12 @@
 // The WebGL renderer: one canvas, one scene, an orthographic camera in CSS
 // pixels with y pointing down. Layers are drawn in the order they are added,
 // back to front: nebula, background stars, gravity field, trails, burst
-// flashes and sparks, the stars. Then, optionally, bloom.
+// flashes and sparks, the stars. Then post-processing: bloom and shock waves.
 // ---------------------------------------------------------------------------
 import { LinearSRGBColorSpace, OrthographicCamera, Scene, WebGLRenderer } from 'three';
-import { Bloom } from './bloom.js';
 import { Field } from './field.js';
 import { Flashes } from './flashes.js';
+import { Post } from './post.js';
 import { Sky } from './sky.js';
 import { Stars } from './stars.js';
 import { Trails } from './trails.js';
@@ -27,7 +27,7 @@ export class Renderer {
     this.trails = new Trails(this.scene);
     this.flashes = new Flashes(this.scene);
     this.stars = new Stars(this.scene);
-    this.bloom = new Bloom(this.gl);
+    this.post = new Post(this.gl);
     this.opacity = 1; // of everything but the sky; fades out and in on restart
   }
 
@@ -36,7 +36,7 @@ export class Renderer {
     this.gl.setSize(width, height, false);
     Object.assign(this.camera, { left: 0, right: width, top: 0, bottom: height });
     this.camera.updateProjectionMatrix();
-    this.bloom.setSize(Math.round(width * dpr), Math.round(height * dpr));
+    this.post.setSize(Math.round(width * dpr), Math.round(height * dpr));
     this.sky.generate();
   }
 
@@ -52,7 +52,8 @@ export class Renderer {
     this.trails.update(o);
     this.flashes.update(o);
     this.stars.update(now, o);
-    if (showBloom) this.bloom.render(this.scene, this.camera);
+    const waves = this.flashes.waves;
+    if (showBloom || waves.length) this.post.render(this.scene, this.camera, showBloom, waves);
     else {
       this.gl.setRenderTarget(null);
       this.gl.render(this.scene, this.camera);

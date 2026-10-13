@@ -1,7 +1,8 @@
 // ---------------------------------------------------------------------------
 // Anti-aliased lines of any width, rebuilt on the CPU each frame as ribbons of
 // triangles in screen pixels. A line has a solid core and, optionally, a wider
-// soft glow; colour, alpha and width can change from point to point. Joins are
+// soft glow; colour, alpha and width can change from point to point. Alpha may
+// go above 1: the scene is drawn in high dynamic range, for the bloom. Joins are
 // mitred, so a line is one continuous strip — no overlaps that show as beads.
 // ---------------------------------------------------------------------------
 import { BufferAttribute, BufferGeometry, DynamicDrawUsage, Mesh } from 'three';
@@ -28,7 +29,10 @@ const fragmentShader = /* glsl */ `
   void main() {
     float d = abs(vShape.x);
     float core = clamp(vShape.y - d + 0.5, 0.0, 1.0);
-    float glow = clamp(vShape.z - d + 0.5, 0.0, 1.0);
+    // the glow fades smoothly to nothing — no visible band edge — with the
+    // same total light as a flat band of its width
+    float g = d / max(vShape.z, 1e-3);
+    float glow = 2.2 * exp(-4.0 * g * g);
     float a = (vColor.a * core + vShape.w * glow) * uOpacity;
     gl_FragColor = vec4(vColor.rgb * a, a);
   }

@@ -1,10 +1,10 @@
 'use strict';
 
 // ---------------------------------------------------------------------------
-// Close-encounter bursts: a flash and a spray of sparks at the point of
-// closest approach. Positions are in world space so a burst stays where it
-// happened; the stars involved flare up for a moment. This is their state; the
-// renderer draws them.
+// Close-encounter bursts: a flash, a shock wave, a spray of sparks and a few
+// lingering embers at the point of closest approach. Positions are in world
+// space so a burst stays where it happened; the stars involved flare up for a
+// moment. This is their state; the renderer draws them.
 // ---------------------------------------------------------------------------
 const MAX_BURSTS = 12;
 let bursts = [];
@@ -14,16 +14,28 @@ function spawnBurst(a, b, wx, wy, intensity) {
   if (!showBursts) return;
   if (bursts.length >= MAX_BURSTS) bursts.shift();
   const colors = [COLOR_RGB[a.color], COLOR_RGB[b.color]];
-  const count = reducedMotion ? 0 : Math.round(10 + 30 * intensity);
+  const pick = () => colors[Math.random() < 0.5 ? 0 : 1];
+  const sparks = reducedMotion ? 0 : Math.round(14 + 26 * intensity);
+  const embers = reducedMotion ? 0 : Math.round(10 + 20 * intensity);
   bursts.push({
     x: wx, y: wy, born: frameNow, intensity, a, b,
-    life: 0.9 + 0.8 * intensity,
+    life: 1.2 + 0.8 * intensity,
     color: mix(colors[0], colors[1], 0.5),
-    sparks: Array.from({ length: count }, () => ({
+    // fast, short-lived streaks of white-hot matter: most fairly slow, a few very fast
+    sparks: Array.from({ length: sparks }, () => ({
       angle: Math.random() * Math.PI * 2,
-      speed: (60 + Math.random() * 220) * (0.5 + intensity),
-      color: mix(colors[Math.random() < 0.5 ? 0 : 1], WHITE, Math.random() * 0.6),
-      life: 0.4 + Math.random() * 0.6,
+      speed: (50 + 330 * Math.random() ** 2.5) * (0.6 + intensity),
+      color: pick(),
+      life: 0.3 + Math.random() * 0.5,
+    })),
+    // slow glowing motes that linger and flicker after the sparks are gone
+    embers: Array.from({ length: embers }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      speed: (15 + 60 * Math.random()) * (0.6 + intensity),
+      color: mix(pick(), WHITE, 0.3),
+      life: 0.6 + Math.random() * 0.4,
+      flicker: 6 + Math.random() * 10, // Hz
+      phase: Math.random() * Math.PI * 2,
     })),
   });
 }

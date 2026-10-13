@@ -88,7 +88,7 @@ npm run vendor
 | `js/gl/trails.js` | Glowing trails |
 | `js/gl/flashes.js` | Close-encounter flashes and sparks |
 | `js/gl/stars.js` | Star shader: halo, diffraction rays, glints and core |
-| `js/gl/bloom.js` | Bloom: the bright parts of the frame, blurred and added back |
+| `js/gl/post.js` | Post-processing: bloom, and shock waves that bend the picture |
 | `js/gl/strokes.js` | Anti-aliased lines of any width, with glow |
 | `js/gl/common.js` | Blending modes, sprites and full-screen passes shared by the layers |
 | `js/audio.js` | Sound effects for close encounters |
