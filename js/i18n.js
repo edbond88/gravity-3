@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 // Translations. Elements opt in with data-i18n (text), data-i18n-html (markup),
 // data-i18n-title (tooltip) or data-i18n-label (<optgroup>). Text set from
-// main.js goes through t() and is refreshed on the 'langchange' event.
+// the other scripts goes through t() and is refreshed on the 'langchange' event.
 // ---------------------------------------------------------------------------
 const STRINGS = {
   en: {

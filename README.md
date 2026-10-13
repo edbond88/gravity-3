@@ -60,8 +60,29 @@ Then open <http://localhost:8173>.
 | File | What's inside |
 |---|---|
 | `index.html` | Page layout, controls and the help dialog |
-| `main.js` | Physics, starting configurations, camera, rendering, controls |
-| `field.js` | Gravity field overlay: rubber sheet, heat map, equilibrium points |
-| `audio.js` | Sound effects for close encounters |
-| `i18n.js` | English and Ukrainian strings and the language switcher |
+| `js/physics.js` | Gravity, energies, the Verlet integrator and its adaptive step — pure functions, no DOM |
+| `js/presets.js` | Starting configurations: random chaos, Lagrange, Euler, figure-eight, Šuvakov orbits, hierarchical triple |
+| `js/simulation.js` | Simulation state, advancing it in time, trails, close encounters, restarts |
+| `js/camera.js` | Canvas setup and the camera that keeps every star in view |
+| `js/background.js` | Nebula and parallax star field |
+| `js/field.js` | Gravity field overlay: rubber sheet, heat map, equilibrium points |
+| `js/render.js` | Trails, stars and close-encounter bursts |
+| `js/hud.js` | Time, energy drift, speeds and masses at the top |
+| `js/controls.js` | Buttons, sliders, keyboard shortcuts and dragging stars |
+| `js/main.js` | The animation loop and start-up |
+| `js/audio.js` | Sound effects for close encounters |
+| `js/i18n.js` | English and Ukrainian strings and the language switcher |
 | `style.css` | Styles |
+| `tests/` | Tests for the physics, the starting configurations and the translations |
+
+The scripts are plain `<script>` tags sharing globals, loaded in the order listed in `index.html`.
+
+## Tests
+
+The tests use Node's built-in test runner (Node 20 or newer), with no dependencies:
+
+```bash
+npm test
+```
+
+They load `js/physics.js`, `js/presets.js` and `js/i18n.js` the way the browser does and check that the integrator conserves energy, momentum and angular momentum and is time-reversible, that every periodic orbit comes back after one period, that the Lagrange and Euler solutions rotate rigidly, and that no translation is missing.

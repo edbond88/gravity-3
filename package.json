@@ -1,0 +1,11 @@
+{
+  "name": "gravity-3",
+  "private": true,
+  "description": "An interactive simulation of the three-body problem",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

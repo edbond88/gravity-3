@@ -7,6 +7,8 @@
   --font-display: "Syne", "Space Grotesk", sans-serif;
   --font-text: "Space Grotesk", -apple-system, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  /* height of the controls bar; js/controls.js keeps it up to date */
+  --controls-h: 5.5rem;
 }
 
 /* Syne and Space Grotesk have no Cyrillic */
@@ -257,8 +259,6 @@ body.paused .controls { opacity: 1; }
 
 .masses label.toggle input { margin: 0; accent-color: #8fa8ff; cursor: pointer; }
 
-}
-
 #btn-help { padding: 0.4rem 0.65rem; }
 
 .help {
@@ -473,7 +473,7 @@ body.ui-hidden .controls {
     display: none;
     left: 0.75rem;
     right: 0.75rem;
-    bottom: calc(var(--controls-h, 5.5rem) + 1.25rem);
+    bottom: calc(var(--controls-h) + 1.25rem);
     z-index: 6;
     padding: 1rem;
     border-radius: 12px;
