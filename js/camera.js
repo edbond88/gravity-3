@@ -1,12 +1,10 @@
 'use strict';
 
 // ---------------------------------------------------------------------------
-// Canvas setup
+// Canvas setup. The canvas belongs to the WebGL renderer (js/gl/); this keeps
+// its size in CSS pixels, which is the unit everything on screen is laid out in.
 // ---------------------------------------------------------------------------
-const bgCanvas = document.getElementById('bg');
-const bg = bgCanvas.getContext('2d');
 const canvas = document.getElementById('sim');
-const ctx = canvas.getContext('2d');
 const statsEl = document.querySelector('.stats');
 
 let width = 0, height = 0, dpr = 1;
@@ -15,12 +13,10 @@ function resize() {
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   width = window.innerWidth;
   height = window.innerHeight;
-  for (const c of [bgCanvas, canvas]) {
-    c.width = Math.round(width * dpr);
-    c.height = Math.round(height * dpr);
-  }
-  generateBackground();
 }
+
+// Wraps v into [-period/2, period/2).
+const wrap = (v, period) => ((((v + period / 2) % period) + period) % period) - period / 2;
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

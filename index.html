@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="bg"></canvas>
   <canvas id="sim"></canvas>
+  <p class="no-webgl" data-i18n="webgl.missing" hidden></p>
 
   <div class="overlay">
     <header>
@@ -160,11 +160,12 @@
   <script src="js/presets.js"></script>
   <script src="js/simulation.js"></script>
   <script src="js/camera.js"></script>
-  <script src="js/background.js"></script>
+  <script src="js/colors.js"></script>
+  <script src="js/bursts.js"></script>
   <script src="js/field.js"></script>
-  <script src="js/render.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/controls.js"></script>
-  <script src="js/main.js"></script>
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

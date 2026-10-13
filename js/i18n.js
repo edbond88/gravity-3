@@ -8,6 +8,7 @@
 const STRINGS = {
   en: {
     'doc.title': 'The three-body problem',
+    'webgl.missing': 'This simulation needs WebGL, which this browser has turned off or doesn\'t support.',
     'title': 'The <span class="nowrap">three-body</span> problem',
     'stat.time': 'Time elapsed',
     'unit.year.one': 'year',
@@ -116,6 +117,7 @@ const STRINGS = {
 
   uk: {
     'doc.title': 'Задача трьох тіл',
+    'webgl.missing': 'Симуляції потрібен WebGL, а цей браузер його вимкнув або не підтримує.',
     'title': 'Задача трьох тіл',
     'stat.time': 'Минуло часу',
     'unit.year.one': 'рік',

@@ -128,13 +128,18 @@ function reset() {
   hudTimer = 0;
 }
 
+// The stars fade out, the new system is set up while nothing is visible, and
+// fades in. The renderer eases its opacity towards `fadeTarget`.
+const FADE_TIME = 0.9; // s
+let fadeTarget = 1;
+
 function restart() {
   if (restarting) return;
   restarting = true;
-  canvas.style.opacity = '0';
+  fadeTarget = 0;
   setTimeout(() => {
     reset();
-    canvas.style.opacity = '1';
+    fadeTarget = 1;
     restarting = false;
-  }, 900);
+  }, FADE_TIME * 1000);
 }

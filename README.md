@@ -47,13 +47,23 @@ Drag a star with the mouse (or a finger) to move it — paused or running. Relea
 
 ## Running locally
 
-No build step — it's plain HTML, CSS and JavaScript. Serve the folder with any static server:
+No build step — it's plain HTML, CSS and JavaScript, drawn with WebGL through [three.js](https://threejs.org). Serve the folder with any static server:
 
 ```bash
 python3 -m http.server 8173
 ```
 
 Then open <http://localhost:8173>.
+
+three.js is vendored as `vendor/three.module.js`: only the classes the renderer uses, bundled and minified (about 130 KB gzipped). To update it, change the version in `package.json`, add any newly needed classes to `scripts/three.js`, and run:
+
+```bash
+npm install
+```
+
+```bash
+npm run vendor
+```
 
 ## Project structure
 
@@ -63,19 +73,29 @@ Then open <http://localhost:8173>.
 | `js/physics.js` | Gravity, energies, the Verlet integrator and its adaptive step — pure functions, no DOM |
 | `js/presets.js` | Starting configurations: random chaos, Lagrange, Euler, figure-eight, Šuvakov orbits, hierarchical triple |
 | `js/simulation.js` | Simulation state, advancing it in time, trails, close encounters, restarts |
-| `js/camera.js` | Canvas setup and the camera that keeps every star in view |
-| `js/background.js` | Nebula and parallax star field |
-| `js/field.js` | Gravity field overlay: rubber sheet, heat map, equilibrium points |
-| `js/render.js` | Trails, stars and close-encounter bursts |
+| `js/camera.js` | Screen size and the camera that keeps every star in view |
+| `js/colors.js` | Star, trail and temperature colours |
+| `js/bursts.js` | Close-encounter flashes and sparks: their state |
+| `js/field.js` | Gravity field maths: potential depth, the rubber sheet, equilibrium points |
 | `js/hud.js` | Time, energy drift, speeds and masses at the top |
 | `js/controls.js` | Buttons, sliders, keyboard shortcuts and dragging stars |
 | `js/main.js` | The animation loop and start-up |
+| `js/gl/renderer.js` | The WebGL renderer: one scene, drawn in layers |
+| `js/gl/sky.js` | Nebula and parallax star field |
+| `js/gl/field.js` | Heat map shader, rubber sheet and equilibrium markers |
+| `js/gl/trails.js` | Glowing trails |
+| `js/gl/flashes.js` | Close-encounter flashes and sparks |
+| `js/gl/stars.js` | Star shader: halo, diffraction rays, glints and core |
+| `js/gl/strokes.js` | Anti-aliased lines of any width, with glow |
+| `js/gl/common.js` | Blending modes, sprites and full-screen passes shared by the layers |
 | `js/audio.js` | Sound effects for close encounters |
 | `js/i18n.js` | English and Ukrainian strings and the language switcher |
 | `style.css` | Styles |
+| `vendor/three.module.js` | three.js, trimmed to what the renderer uses |
+| `scripts/three.js` | The list of three.js classes that goes into the vendored build |
 | `tests/` | Tests for the physics, the starting configurations and the translations |
 
-The scripts are plain `<script>` tags sharing globals, loaded in the order listed in `index.html`.
+The simulation, controls and HUD are plain `<script>` tags sharing globals, loaded in the order listed in `index.html`; they are what the tests load in Node. The renderer in `js/gl/` and `js/main.js` are ES modules, since three.js is one — they run after the plain scripts and use their globals.
 
 ## Tests
 

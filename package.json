@@ -3,9 +3,14 @@
   "private": true,
   "description": "An interactive simulation of the three-body problem",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "vendor": "esbuild scripts/three.js --bundle --minify --format=esm --legal-comments=eof --outfile=vendor/three.module.js"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "0.186.1"
   }
 }
