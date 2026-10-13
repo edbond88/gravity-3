@@ -89,7 +89,8 @@ const STRINGS = {
       'with a distant star. Most solutions are unstable and fall apart after a few periods.',
     'help.masses': '<b>Masses</b> — set each star\'s mass in solar masses. Changing one ' +
       'restarts the simulation. Orbits marked “equal masses” switch back to chaos.',
-    'help.drag': '<b>Drag stars</b> — pause, drag any star to a new place and press play.',
+    'help.drag': '<b>Drag stars</b> — grab any star with the mouse or a finger. Paused, it moves to a ' +
+      'new place; running, the others keep orbiting it, and when you let go it flies off as you threw it.',
     'help.field': '<b>Gravity field</b> — show the potential the stars move in: a rubber sheet ' +
       'pulled into wells, or a heat map with isolines. Stars roll downhill; ⌖ marks the points ' +
       'between them where the pulls cancel out.',
@@ -198,8 +199,9 @@ const STRINGS = {
       'зіркою. Більшість розв\'язків нестійкі й розпадаються через кілька періодів.',
     'help.masses': '<b>Маси</b> — задай масу кожної зірки в масах Сонця. Зміна маси ' +
       'перезапускає симуляцію. Орбіти з позначкою «рівні маси» перемикаються на хаос.',
-    'help.drag': '<b>Перетягування</b> — постав на паузу, перетягни будь-яку зірку на нове ' +
-      'місце й натисни пуск.',
+    'help.drag': '<b>Перетягування</b> — хапай будь-яку зірку мишею чи пальцем. На паузі вона ' +
+      'переміщується на нове місце; під час руху інші кружляють довкола неї, а відпущена — ' +
+      'летить зі швидкістю кидка.',
     'help.field': '<b>Поле тяжіння</b> — покажи потенціал, у якому рухаються зірки: гумове ' +
       'полотно з ямами або теплову карту з ізолініями. Зірки «скочуються» вниз; ⌖ позначає ' +
       'точки між ними, де притягання врівноважується.',

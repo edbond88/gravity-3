@@ -9,11 +9,9 @@ const speedRange = document.getElementById('speed-range');
 const speedLabel = document.getElementById('speed-label');
 
 function setPaused(p) {
-  if (!p && drag) dropStar();
   paused = p;
   pauseBtn.textContent = t(paused ? 'play' : 'pause');
   document.body.classList.toggle('paused', paused);
-  if (!paused) canvas.style.cursor = '';
 }
 
 function setSpeed(exp) {
@@ -204,10 +202,15 @@ window.addEventListener('keydown', (e) => {
 });
 
 // ---------------------------------------------------------------------------
-// Dragging stars (while paused)
+// Dragging stars. Paused, a star is simply moved to a new place. Running, it
+// is held under the pointer while the others keep moving around it, and when
+// let go it flies off at the speed it was thrown with.
 // ---------------------------------------------------------------------------
 const DRAG_RADIUS = 24; // px around a star that still grabs it
-let drag = null;        // { body, dx, dy } — grab offset in world units
+const MAX_THROW = 30;   // AU/yr (~140 km/s) — a flick of the mouse can't fling a star to infinity
+// { body, dx, dy, x, y, vx, vy }: grab offset and where the pointer wants the
+// star, in world units; the smoothed speed it is being moved at, in AU/yr.
+let drag = null;
 
 function starAt(sx, sy) {
   let best = null, bestD = DRAG_RADIUS;
@@ -218,15 +221,23 @@ function starAt(sx, sy) {
   return best;
 }
 
-// Velocities are untouched, so total momentum stays zero; only the COM moved.
-// Shift everything back so it sits at the origin, and let the camera catch up.
+// Moving a star shifts the COM, and holding or throwing one gives the system
+// momentum. Shift everything back so the COM is at rest at the origin, and let
+// the camera catch up. Relative motion — all that matters — is unchanged.
 function dropStar() {
+  const { body } = drag;
+  if (!paused) {
+    const k = Math.min(1, MAX_THROW / (Math.hypot(drag.vx, drag.vy) || 1));
+    body.vx = drag.vx * k;
+    body.vy = drag.vy * k;
+  }
   drag = null;
   const M = bodies.reduce((s, b) => s + b.mass, 0);
-  const cx = bodies.reduce((s, b) => s + b.mass * b.x, 0) / M;
-  const cy = bodies.reduce((s, b) => s + b.mass * b.y, 0) / M;
+  const com = (key) => bodies.reduce((s, b) => s + b.mass * b[key], 0) / M;
+  const cx = com('x'), cy = com('y'), cvx = com('vx'), cvy = com('vy');
   for (const b of bodies) {
     b.x -= cx; b.y -= cy;
+    b.vx -= cvx; b.vy -= cvy;
     for (const p of b.trail) { p.x -= cx; p.y -= cy; }
   }
   camera.ox += cx;
@@ -237,20 +248,21 @@ function dropStar() {
 }
 
 canvas.addEventListener('pointerdown', (e) => {
-  if (!paused || restarting) return;
+  if (restarting) return;
   const b = starAt(e.clientX, e.clientY);
   if (!b) return;
-  drag = { body: b, dx: b.x - toWorldX(e.clientX), dy: b.y - toWorldY(e.clientY) };
-  b.trail = []; // its history no longer leads to where it is
+  drag = { body: b, dx: b.x - toWorldX(e.clientX), dy: b.y - toWorldY(e.clientY), x: b.x, y: b.y, vx: 0, vy: 0 };
+  if (paused) b.trail = []; // its history no longer leads to where it is
   canvas.setPointerCapture(e.pointerId);
   canvas.style.cursor = 'grabbing';
 });
 
 canvas.addEventListener('pointermove', (e) => {
   if (drag) {
-    drag.body.x = toWorldX(e.clientX) + drag.dx;
-    drag.body.y = toWorldY(e.clientY) + drag.dy;
-  } else if (paused) {
+    drag.x = toWorldX(e.clientX) + drag.dx;
+    drag.y = toWorldY(e.clientY) + drag.dy;
+    if (paused) { drag.body.x = drag.x; drag.body.y = drag.y; }
+  } else {
     canvas.style.cursor = starAt(e.clientX, e.clientY) ? 'grab' : '';
   }
 });

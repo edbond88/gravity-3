@@ -49,7 +49,21 @@ function pruneTrails(list, t) {
   }
 }
 
+// A star held by the pointer glides in a straight line to where the pointer
+// is now over the frame; the others feel its pull, but it ignores theirs.
+const THROW_SMOOTHING = 0.08; // s — the throw is the pointer's speed over about this long
+
 function advance(years) {
+  if (years <= 0) return;
+  const held = drag && {
+    body: drag.body, x0: drag.body.x, y0: drag.body.y,
+    vx: (drag.x - drag.body.x) / years, vy: (drag.y - drag.body.y) / years,
+  };
+  if (held) {
+    const k = 1 - Math.exp(-years / rate / THROW_SMOOTHING);
+    drag.vx += (held.vx - drag.vx) * k;
+    drag.vy += (held.vy - drag.vy) * k;
+  }
   let left = years;
   let steps = 0;
   while (left > 0 && steps < MAX_STEPS_PER_FRAME) {
@@ -58,6 +72,12 @@ function advance(years) {
     simTime += dt;
     left -= dt;
     steps++;
+    if (held) {
+      const b = held.body, f = years - left;
+      b.x = held.x0 + held.vx * f; b.y = held.y0 + held.vy * f;
+      b.vx = held.vx; b.vy = held.vy;
+      computeAccelerations(bodies, softening);
+    }
     recordTrails(bodies, simTime);
     detectEncounters();
   }

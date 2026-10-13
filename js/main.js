@@ -13,7 +13,7 @@ function frame(now) {
 
   if (!paused) {
     advance(realDt * rate);
-    if (!restarting && systemDissolved(bodies)) restart();
+    if (!restarting && !drag && systemDissolved(bodies)) restart();
   }
   updateCamera(realDt);
   drawBackground(frameNow);
