@@ -437,7 +437,9 @@ function systemDissolved(list) {
 // ---------------------------------------------------------------------------
 // Camera: centred on the COM (the origin), zooms to keep all stars in view.
 // ---------------------------------------------------------------------------
-const camera = { scale: 0, cx: 0, cy: 0 };
+// (ox, oy) is a world-space offset that eases back to zero, so recentring the
+// COM after a star is dragged doesn't make the picture jump.
+const camera = { scale: 0, cx: 0, cy: 0, ox: 0, oy: 0 };
 
 function viewport() {
   const top = statsEl.getBoundingClientRect().bottom + 30;
@@ -454,16 +456,24 @@ function updateCamera(realDt) {
   const vp = viewport();
   camera.cx = vp.cx;
   camera.cy = vp.cy;
+  if (drag) return; // hold the view still while a star is being placed
+  const settle = Math.exp(-realDt * 2.5);
+  camera.ox *= settle;
+  camera.oy *= settle;
   let extent = 2.5;
-  for (const b of bodies) extent = Math.max(extent, Math.abs(b.x) * vp.halfH / vp.halfW, Math.abs(b.y));
+  for (const b of bodies) {
+    extent = Math.max(extent, Math.abs(b.x + camera.ox) * vp.halfH / vp.halfW, Math.abs(b.y + camera.oy));
+  }
   const target = vp.halfH / (extent * 1.15);
   if (!camera.scale) { camera.scale = target; return; }
   const speed = target < camera.scale ? 3 : 0.6; // zoom out quickly, in gently
   camera.scale += (target - camera.scale) * (1 - Math.exp(-realDt * speed));
 }
 
-const toScreenX = (x) => camera.cx + x * camera.scale;
-const toScreenY = (y) => camera.cy + y * camera.scale;
+const toScreenX = (x) => camera.cx + (x + camera.ox) * camera.scale;
+const toScreenY = (y) => camera.cy + (y + camera.oy) * camera.scale;
+const toWorldX = (sx) => (sx - camera.cx) / camera.scale - camera.ox;
+const toWorldY = (sy) => (sy - camera.cy) / camera.scale - camera.oy;
 
 // ---------------------------------------------------------------------------
 // Rendering
@@ -564,8 +574,11 @@ const speedRange = document.getElementById('speed-range');
 const speedLabel = document.getElementById('speed-label');
 
 function setPaused(p) {
+  if (!p && drag) dropStar();
   paused = p;
   pauseBtn.textContent = paused ? 'Play' : 'Pause';
+  document.body.classList.toggle('paused', paused);
+  if (!paused) canvas.style.cursor = '';
 }
 
 function setSpeed(exp) {
@@ -601,6 +614,8 @@ function setPreset(p) {
 }
 
 function reset() {
+  drag = null;
+  camera.ox = camera.oy = 0;
   bodies = createBodies();
   resetEncounters();
   simTime = 0;
@@ -662,6 +677,65 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === '+' || e.key === '=') setSpeed(parseFloat(speedRange.value) + 0.25);
   else if (e.key === '-' || e.key === '_') setSpeed(parseFloat(speedRange.value) - 0.25);
 });
+
+// ---------------------------------------------------------------------------
+// Dragging stars (while paused)
+// ---------------------------------------------------------------------------
+const DRAG_RADIUS = 24; // px around a star that still grabs it
+let drag = null;        // { body, dx, dy } — grab offset in world units
+
+function starAt(sx, sy) {
+  let best = null, bestD = DRAG_RADIUS;
+  for (const b of bodies) {
+    const d = Math.hypot(toScreenX(b.x) - sx, toScreenY(b.y) - sy);
+    if (d < bestD) { best = b; bestD = d; }
+  }
+  return best;
+}
+
+// Velocities are untouched, so total momentum stays zero; only the COM moved.
+// Shift everything back so it sits at the origin, and let the camera catch up.
+function dropStar() {
+  drag = null;
+  const M = bodies.reduce((s, b) => s + b.mass, 0);
+  const cx = bodies.reduce((s, b) => s + b.mass * b.x, 0) / M;
+  const cy = bodies.reduce((s, b) => s + b.mass * b.y, 0) / M;
+  for (const b of bodies) {
+    b.x -= cx; b.y -= cy;
+    for (const p of b.trail) { p.x -= cx; p.y -= cy; }
+  }
+  camera.ox += cx;
+  camera.oy += cy;
+  computeAccelerations(bodies);
+  resetEncounters();
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (!paused || restarting) return;
+  const b = starAt(e.clientX, e.clientY);
+  if (!b) return;
+  drag = { body: b, dx: b.x - toWorldX(e.clientX), dy: b.y - toWorldY(e.clientY) };
+  b.trail = []; // its history no longer leads to where it is
+  canvas.setPointerCapture(e.pointerId);
+  canvas.style.cursor = 'grabbing';
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (drag) {
+    drag.body.x = toWorldX(e.clientX) + drag.dx;
+    drag.body.y = toWorldY(e.clientY) + drag.dy;
+  } else if (paused) {
+    canvas.style.cursor = starAt(e.clientX, e.clientY) ? 'grab' : '';
+  }
+});
+
+function endDrag() {
+  if (!drag) return;
+  dropStar();
+  canvas.style.cursor = 'grab';
+}
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
 
 // ---------------------------------------------------------------------------
 // Main loop

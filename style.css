@@ -21,6 +21,7 @@ html, body {
 }
 
 canvas {
+  touch-action: none;
   position: fixed;
   inset: 0;
   width: 100%;
@@ -139,6 +140,10 @@ h1 {
 }
 
 .controls:hover { opacity: 1; }
+
+.drag-hint { display: none; margin-right: 0.4rem; }
+body.paused .drag-hint { display: inline; }
+body.paused .controls { opacity: 1; }
 
 .controls button {
   font: inherit;
