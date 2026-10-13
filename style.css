@@ -37,6 +37,19 @@ canvas {
   display: block;
 }
 
+.no-webgl {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+.no-webgl[hidden] { display: none; }
+
 .overlay {
   position: fixed;
   inset: 0;

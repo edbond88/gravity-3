@@ -10,8 +10,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <canvas id="bg"></canvas>
   <canvas id="sim"></canvas>
+  <p class="no-webgl" data-i18n="webgl.missing" hidden></p>
 
   <div class="overlay">
     <header>
@@ -103,9 +103,21 @@
       <span style="--c: #fff" data-i18n="legend.edge"></span> ·
       <span style="--c: rgb(255, 125, 50)" data-i18n="legend.escape"></span>
     </div>
+    <label class="toggle" data-i18n-title="dust.title">
+      <input id="dust" type="checkbox" checked>
+      <span data-i18n="dust"></span>
+    </label>
     <label class="toggle" data-i18n-title="bursts.title">
       <input id="bursts" type="checkbox" checked>
       <span data-i18n="bursts"></span>
+    </label>
+    <label class="toggle" data-i18n-title="waves.title">
+      <input id="waves" type="checkbox" checked>
+      <span data-i18n="waves"></span>
+    </label>
+    <label class="toggle" data-i18n-title="bloom.title">
+      <input id="bloom" type="checkbox" checked>
+      <span data-i18n="bloom"></span>
     </label>
   </div>
 
@@ -143,7 +155,10 @@
         <dt><kbd>M</kbd></dt><dd data-i18n="key.sound"></dd>
         <dt><kbd>G</kbd></dt><dd data-i18n="key.field"></dd>
         <dt><kbd>T</kbd></dt><dd data-i18n="key.trails"></dd>
+        <dt><kbd>D</kbd></dt><dd data-i18n="key.dust"></dd>
         <dt><kbd>F</kbd></dt><dd data-i18n="key.bursts"></dd>
+        <dt><kbd>W</kbd></dt><dd data-i18n="key.waves"></dd>
+        <dt><kbd>B</kbd></dt><dd data-i18n="key.bloom"></dd>
         <dt><kbd>E</kbd></dt><dd data-i18n="key.trailColor"></dd>
         <dt><kbd>U</kbd></dt><dd data-i18n="key.ui"></dd>
         <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd data-i18n="key.speed"></dd>
@@ -160,11 +175,13 @@
   <script src="js/presets.js"></script>
   <script src="js/simulation.js"></script>
   <script src="js/camera.js"></script>
-  <script src="js/background.js"></script>
+  <script src="js/colors.js"></script>
+  <script src="js/bursts.js"></script>
+  <script src="js/dust.js"></script>
   <script src="js/field.js"></script>
-  <script src="js/render.js"></script>
   <script src="js/hud.js"></script>
   <script src="js/controls.js"></script>
-  <script src="js/main.js"></script>
+  <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@
 const STRINGS = {
   en: {
     'doc.title': 'The three-body problem',
+    'webgl.missing': 'This simulation needs WebGL, which this browser has turned off or doesn\'t support.',
     'title': 'The <span class="nowrap">three-body</span> problem',
     'stat.time': 'Time elapsed',
     'unit.year.one': 'year',
@@ -62,6 +63,12 @@ const STRINGS = {
     'legend.escape': 'escaping',
     'bursts': 'Flashes',
     'bursts.title': 'Flash and sparks at close encounters (F)',
+    'dust': 'Dust',
+    'dust.title': 'A cloud of weightless dust that the stars stir into arms and streams (D)',
+    'waves': 'Shock waves',
+    'waves.title': 'Close encounters send out a wave that bends the picture behind it (W)',
+    'bloom': 'Glow',
+    'bloom.title': 'Bright light bleeds softly into its surroundings, like in a camera (B)',
 
     'drag.hint': 'Drag a star to move it',
     'pause': 'Pause',
@@ -107,6 +114,9 @@ const STRINGS = {
     'key.ui': 'Hide / show controls',
     'key.trails': 'Trails on / off',
     'key.bursts': 'Flashes on / off',
+    'key.dust': 'Dust on / off',
+    'key.waves': 'Shock waves on / off',
+    'key.bloom': 'Glow on / off',
     'key.trailColor': 'Trail colour: speed / energy',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
@@ -116,6 +126,7 @@ const STRINGS = {
 
   uk: {
     'doc.title': 'Задача трьох тіл',
+    'webgl.missing': 'Симуляції потрібен WebGL, а цей браузер його вимкнув або не підтримує.',
     'title': 'Задача трьох тіл',
     'stat.time': 'Минуло часу',
     'unit.year.one': 'рік',
@@ -172,6 +183,12 @@ const STRINGS = {
     'legend.escape': 'тікає',
     'bursts': 'Спалахи',
     'bursts.title': 'Спалах та іскри при зближенні (F)',
+    'dust': 'Пил',
+    'dust.title': 'Хмара невагомого пилу, яку зірки розбивають на рукави й потоки (D)',
+    'waves': 'Ударні хвилі',
+    'waves.title': 'Тісне зближення посилає хвилю, що викривлює все позаду неї (W)',
+    'bloom': 'Сяйво',
+    'bloom.title': 'Яскраве світло м\'яко розтікається довкола, як у камері (B)',
 
     'drag.hint': 'Перетягни зірку, щоб перемістити',
     'pause': 'Пауза',
@@ -218,6 +235,9 @@ const STRINGS = {
     'key.ui': 'Сховати / показати елементи керування',
     'key.trails': 'Увімкнути / вимкнути хвости',
     'key.bursts': 'Увімкнути / вимкнути спалахи',
+    'key.dust': 'Увімкнути / вимкнути пил',
+    'key.waves': 'Увімкнути / вимкнути ударні хвилі',
+    'key.bloom': 'Увімкнути / вимкнути сяйво',
     'key.trailColor': 'Колір хвоста: швидкість / енергія',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',

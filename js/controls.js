@@ -102,13 +102,55 @@ let showBursts = localStorage.getItem('bursts') !== 'off';
 function setBursts(on) {
   showBursts = on;
   burstsCheckbox.checked = on;
-  if (!on) bursts = [];
   localStorage.setItem('bursts', on ? 'on' : 'off');
 }
 
 burstsCheckbox.addEventListener('change', () => {
   setBursts(burstsCheckbox.checked);
   burstsCheckbox.blur(); // keep keyboard shortcuts working
+});
+
+const dustCheckbox = document.getElementById('dust');
+let showDust = localStorage.getItem('dust') !== 'off';
+
+function setDust(on) {
+  if (on && !showDust) resetDust(); // a fresh cloud, not the one left behind
+  showDust = on;
+  dustCheckbox.checked = on;
+  localStorage.setItem('dust', on ? 'on' : 'off');
+}
+
+dustCheckbox.addEventListener('change', () => {
+  setDust(dustCheckbox.checked);
+  dustCheckbox.blur(); // keep keyboard shortcuts working
+});
+
+const wavesCheckbox = document.getElementById('waves');
+let showWaves = localStorage.getItem('waves') !== 'off';
+
+function setWaves(on) {
+  showWaves = on;
+  wavesCheckbox.checked = on;
+  localStorage.setItem('waves', on ? 'on' : 'off');
+}
+
+wavesCheckbox.addEventListener('change', () => {
+  setWaves(wavesCheckbox.checked);
+  wavesCheckbox.blur(); // keep keyboard shortcuts working
+});
+
+const bloomCheckbox = document.getElementById('bloom');
+let showBloom = localStorage.getItem('bloom') !== 'off';
+
+function setBloom(on) {
+  showBloom = on;
+  bloomCheckbox.checked = on;
+  localStorage.setItem('bloom', on ? 'on' : 'off');
+}
+
+bloomCheckbox.addEventListener('change', () => {
+  setBloom(bloomCheckbox.checked);
+  bloomCheckbox.blur(); // keep keyboard shortcuts working
 });
 
 const fieldSelect = document.getElementById('field');
@@ -189,6 +231,9 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyU') setUiHidden(!uiHidden);
   else if (e.code === 'KeyT') setTrails(!showTrails);
   else if (e.code === 'KeyF') setBursts(!showBursts);
+  else if (e.code === 'KeyW') setWaves(!showWaves);
+  else if (e.code === 'KeyD') setDust(!showDust);
+  else if (e.code === 'KeyB') setBloom(!showBloom);
   else if (e.code === 'KeyE') setTrailColor(trailColor === 'energy' ? 'speed' : 'energy');
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
@@ -240,6 +285,7 @@ function dropStar() {
     b.vx -= cvx; b.vy -= cvy;
     for (const p of b.trail) { p.x -= cx; p.y -= cy; }
   }
+  if (showDust) shiftDust(cx, cy, cvx, cvy);
   camera.ox += cx;
   camera.oy += cy;
   computeAccelerations(bodies, softening);

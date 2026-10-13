@@ -55,6 +55,7 @@ const THROW_SMOOTHING = 0.08; // s — the throw is the pointer's speed over abo
 
 function advance(years) {
   if (years <= 0) return;
+  const dustStep = Math.max(DUST_STEP, years / DUST_MAX_STEPS);
   const held = drag && {
     body: drag.body, x0: drag.body.x, y0: drag.body.y,
     vx: (drag.x - drag.body.x) / years, vy: (drag.y - drag.body.y) / years,
@@ -79,6 +80,7 @@ function advance(years) {
       computeAccelerations(bodies, softening);
     }
     recordTrails(bodies, simTime);
+    if (showDust) advanceDust(bodies, dt, dustStep);
     detectEncounters();
   }
   pruneTrails(bodies, simTime);
@@ -123,18 +125,24 @@ function reset() {
   energy0 = totalEnergy(bodies, softening);
   resetEncounters();
   bursts = [];
+  resetDust();
   simTime = 0;
   camera.scale = 0;
   hudTimer = 0;
 }
 
+// The stars fade out, the new system is set up while nothing is visible, and
+// fades in. The renderer eases its opacity towards `fadeTarget`.
+const FADE_TIME = 0.9; // s
+let fadeTarget = 1;
+
 function restart() {
   if (restarting) return;
   restarting = true;
-  canvas.style.opacity = '0';
+  fadeTarget = 0;
   setTimeout(() => {
     reset();
-    canvas.style.opacity = '1';
+    fadeTarget = 1;
     restarting = false;
-  }, 900);
+  }, FADE_TIME * 1000);
 }

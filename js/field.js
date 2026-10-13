@@ -5,22 +5,17 @@
 //   grid — a rubber sheet whose lines are pulled into each star's well;
 //   heat — the depth of the potential as a colour map with isolines.
 // Both mark the equilibrium points, where the stars' pulls cancel out.
-// Uses the simulation's globals (bodies, camera, ctx, …) at draw time only.
+// This is the maths; js/gl/field.js draws it. The heat map is computed per
+// pixel on the GPU, from the same formula as depthAt() and the HEAT_RAMP colours.
 // ---------------------------------------------------------------------------
 const FIELD_MODES = ['off', 'grid', 'heat'];
 
-const HEAT_CELL = 6;          // px per sample of the colour map
 const HEAT_LEVELS = 0.28;     // isoline spacing, in ln(depth)
 const GRID_STEP = 40;         // px between sheet lines (smaller on phones)
 const GRID_SAMPLE = 8;        // px between points along a sheet line
-const GRID_BUCKETS = 8;       // brightness levels; lines are batched by them
 const WELL_SOFTENING = 14;    // px — keeps the wells finite at the stars
 
 let fieldMode = FIELD_MODES.includes(localStorage.getItem('field')) ? localStorage.getItem('field') : 'off';
-
-const heatCanvas = document.createElement('canvas');
-const heatCtx = heatCanvas.getContext('2d');
-let heatImage = null;
 
 // Potential depth at a world point, made dimensionless so it reads the same at
 // any zoom: 1 means "as deep as the whole system seen from the edge of the view".
@@ -54,69 +49,6 @@ const HEAT_RAMP = [
   [1, 255, 150, 80, 0.5],
 ];
 
-function heatColor(f) {
-  let i = 0;
-  while (i < HEAT_RAMP.length - 2 && f > HEAT_RAMP[i + 1][0]) i++;
-  const a = HEAT_RAMP[i], b = HEAT_RAMP[i + 1];
-  const k = (f - a[0]) / (b[0] - a[0]);
-  return [1, 2, 3, 4].map((j) => a[j] + (b[j] - a[j]) * k);
-}
-
-function drawHeat() {
-  const { R, a2, M } = fieldScale();
-  const cols = Math.ceil(width / HEAT_CELL) + 1, rows = Math.ceil(height / HEAT_CELL) + 1;
-  if (heatCanvas.width !== cols || heatCanvas.height !== rows) {
-    heatCanvas.width = cols;
-    heatCanvas.height = rows;
-    heatImage = heatCtx.createImageData(cols, rows);
-  }
-  const d = heatImage.data;
-  const lnp = new Float32Array(cols * rows);
-  for (let j = 0; j < rows; j++) {
-    const wy = toWorldY(j * HEAT_CELL);
-    for (let i = 0; i < cols; i++) {
-      const v = Math.log(depthAt(toWorldX(i * HEAT_CELL), wy, R, a2, M));
-      lnp[j * cols + i] = v;
-      const [r, g, b, al] = heatColor(depthLevel(v));
-      const o = (j * cols + i) * 4;
-      d[o] = r; d[o + 1] = g; d[o + 2] = b; d[o + 3] = al * 255;
-    }
-  }
-  heatCtx.putImageData(heatImage, 0, 0);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  // sample (i, j) sits at pixel (i, j) × HEAT_CELL, so shift by half a cell
-  ctx.drawImage(heatCanvas, -HEAT_CELL / 2, -HEAT_CELL / 2, cols * HEAT_CELL, rows * HEAT_CELL);
-
-  // Isolines by marching squares, all levels in one path.
-  ctx.beginPath();
-  const lerp = (a, b, level) => (level - a) / (b - a);
-  for (let j = 0; j < rows - 1; j++) {
-    for (let i = 0; i < cols - 1; i++) {
-      const v0 = lnp[j * cols + i] / HEAT_LEVELS, v1 = lnp[j * cols + i + 1] / HEAT_LEVELS;
-      const v2 = lnp[(j + 1) * cols + i + 1] / HEAT_LEVELS, v3 = lnp[(j + 1) * cols + i] / HEAT_LEVELS;
-      const lo = Math.ceil(Math.min(v0, v1, v2, v3)), hi = Math.floor(Math.max(v0, v1, v2, v3));
-      if (lo > hi || hi - lo > 6) continue; // flat, or too steep to be legible (inside a well)
-      const x = i * HEAT_CELL, y = j * HEAT_CELL, c = HEAT_CELL;
-      for (let L = lo; L <= hi; L++) {
-        // crossings on the four edges: top, right, bottom, left
-        const pts = [];
-        if ((v0 < L) !== (v1 < L)) pts.push(x + c * lerp(v0, v1, L), y);
-        if ((v1 < L) !== (v2 < L)) pts.push(x + c, y + c * lerp(v1, v2, L));
-        if ((v3 < L) !== (v2 < L)) pts.push(x + c * lerp(v3, v2, L), y + c);
-        if ((v0 < L) !== (v3 < L)) pts.push(x, y + c * lerp(v0, v3, L));
-        for (let k = 0; k + 3 < pts.length; k += 4) {
-          ctx.moveTo(pts[k], pts[k + 1]);
-          ctx.lineTo(pts[k + 2], pts[k + 3]);
-        }
-      }
-    }
-  }
-  ctx.strokeStyle = 'rgba(210, 220, 255, 0.16)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
-
 // Where a sheet point at world (x, y) is pulled to. Each star draws points in
 // by a weight that is ~1 next to it and falls off as 1/r² far away.
 function sheetPoint(x, y, R) {
@@ -131,28 +63,24 @@ function sheetPoint(x, y, R) {
   return [toScreenX(x + ox), toScreenY(y + oy)];
 }
 
-function drawGrid() {
+// The sheet as polylines in screen pixels: each line is a flat [x0, y0, x1, …]
+// array plus the depth level (0…1) at every point, for its brightness.
+function gridLines() {
   const { R, a2, M } = fieldScale();
   const step = width <= MOBILE_WIDTH ? GRID_STEP * 0.75 : GRID_STEP;
   // anchor the lines to the centre of mass so the sheet moves with the camera
   const x0 = wrap(toScreenX(0), step), y0 = wrap(toScreenY(0), step);
-  const paths = Array.from({ length: GRID_BUCKETS }, () => new Path2D());
   const pad = step * 2;
+  const lines = [];
 
   const line = (sx0, sy0, dx, dy, n) => {
-    let prev = null, prevLevel = 0;
+    const points = [], levels = [];
     for (let s = 0; s <= n; s++) {
-      const sx = sx0 + dx * s, sy = sy0 + dy * s;
-      const wx = toWorldX(sx), wy = toWorldY(sy);
-      const p = sheetPoint(wx, wy, R);
-      const level = depthLevel(Math.log(depthAt(wx, wy, R, a2, M)));
-      if (prev) {
-        const bucket = Math.min(GRID_BUCKETS - 1, Math.floor(((level + prevLevel) / 2) * GRID_BUCKETS));
-        paths[bucket].moveTo(prev[0], prev[1]);
-        paths[bucket].lineTo(p[0], p[1]);
-      }
-      prev = p; prevLevel = level;
+      const wx = toWorldX(sx0 + dx * s), wy = toWorldY(sy0 + dy * s);
+      points.push(...sheetPoint(wx, wy, R));
+      levels.push(depthLevel(Math.log(depthAt(wx, wy, R, a2, M))));
     }
+    lines.push({ points, levels });
   };
   for (let y = y0 - pad; y <= height + pad; y += step) {
     line(-pad, y, GRID_SAMPLE, 0, Math.ceil((width + 2 * pad) / GRID_SAMPLE));
@@ -160,13 +88,7 @@ function drawGrid() {
   for (let x = x0 - pad; x <= width + pad; x += step) {
     line(x, -pad, 0, GRID_SAMPLE, Math.ceil((height + 2 * pad) / GRID_SAMPLE));
   }
-
-  ctx.lineWidth = 1;
-  paths.forEach((path, k) => {
-    const f = (k + 0.5) / GRID_BUCKETS;
-    ctx.strokeStyle = `rgba(${Math.round(120 + 100 * f)},${Math.round(140 + 30 * f)},255,${0.08 + 0.3 * f})`;
-    ctx.stroke(path);
-  });
+  return lines;
 }
 
 // Equilibrium points: where the net pull vanishes (saddles of the potential,
@@ -230,24 +152,8 @@ function findEquilibria(a2) {
   return found;
 }
 
-function drawEquilibria() {
+// Equilibrium points in screen pixels, for the current view.
+function equilibria() {
   const a = WELL_SOFTENING / camera.scale;
-  ctx.strokeStyle = 'rgba(235, 240, 255, 0.55)';
-  ctx.lineWidth = 1;
-  for (const [x, y] of findEquilibria(a * a)) {
-    ctx.beginPath();
-    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-    ctx.moveTo(x - 8, y); ctx.lineTo(x - 2.5, y);
-    ctx.moveTo(x + 2.5, y); ctx.lineTo(x + 8, y);
-    ctx.moveTo(x, y - 8); ctx.lineTo(x, y - 2.5);
-    ctx.moveTo(x, y + 2.5); ctx.lineTo(x, y + 8);
-    ctx.stroke();
-  }
-}
-
-function drawField() {
-  if (fieldMode === 'off' || !camera.scale) return;
-  if (fieldMode === 'heat') drawHeat();
-  else drawGrid();
-  drawEquilibria();
+  return findEquilibria(a * a);
 }

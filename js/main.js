@@ -1,9 +1,17 @@
-'use strict';
+// ---------------------------------------------------------------------------
+// Main loop and start-up. An ES module, so it runs after every classic script
+// has defined its functions and state; those it reaches as globals. Drawing is
+// done by the WebGL renderer in js/gl/.
+// ---------------------------------------------------------------------------
+import { Renderer } from './gl/renderer.js';
 
-// ---------------------------------------------------------------------------
-// Main loop and start-up. Loaded last, once every other script has defined
-// its functions and state.
-// ---------------------------------------------------------------------------
+let renderer = null;
+try {
+  renderer = new Renderer(canvas);
+} catch (e) {
+  console.error(e);
+  document.querySelector('.no-webgl').hidden = false;
+}
 let lastFrame = performance.now();
 
 function frame(now) {
@@ -16,15 +24,19 @@ function frame(now) {
     if (!restarting && !drag && systemDissolved(bodies)) restart();
   }
   updateCamera(realDt);
-  drawBackground(frameNow);
-  render();
+  pruneBursts();
+  renderer.render(frameNow, realDt);
   updateHud(realDt);
   requestAnimationFrame(frame);
 }
 
-canvas.style.transition = 'opacity 0.9s ease';
-window.addEventListener('resize', resize);
-resize();
+function onResize() {
+  resize();
+  renderer?.resize();
+}
+
+window.addEventListener('resize', onResize);
+onResize();
 window.addEventListener('langchange', () => {
   pauseBtn.textContent = t(paused ? 'play' : 'pause');
   uiBtn.title = t(uiHidden ? 'ui.show' : 'ui.hide');
@@ -37,7 +49,10 @@ setSpeed(0);
 setField(fieldMode);
 setTrails(showTrails);
 setBursts(showBursts);
+setWaves(showWaves);
+setDust(showDust);
+setBloom(showBloom);
 setTrailColor(trailColor);
 randomizeMasses();
 reset();
-requestAnimationFrame(frame);
+if (renderer) requestAnimationFrame(frame);
