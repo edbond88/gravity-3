@@ -204,6 +204,21 @@ h1 {
 
 .masses button:hover { background: rgba(255, 255, 255, 0.12); }
 
+.masses select {
+  align-self: flex-start;
+  font: inherit;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+}
+
+.masses select option, .masses select optgroup { background: #12121c; color: var(--text); }
+
+.masses .note { font-size: 0.7rem; margin-bottom: 0.6rem; max-width: 220px; }
+
 @media (max-width: 760px) {
   .stats { flex-direction: column; align-items: center; gap: 1rem; margin-top: 1.2rem; }
   .stat { text-align: center; }
