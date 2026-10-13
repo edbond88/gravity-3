@@ -17,7 +17,7 @@ const TRAIL_MAX_DURATION = 12;   // presets show one full period, up to this
 const TRAIL_MIN_DIST = 0.015;    // AU between stored trail points
 const TRAIL_MAX_POINTS = 8000;
 
-const COLORS = ['#6fd0ff', '#ff6fae', '#ffd36e'];
+const COLORS = ['#6fd0ff', '#ff6f6f', '#ffd36e'];
 
 // ---------------------------------------------------------------------------
 // Canvas setup

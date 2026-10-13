@@ -1,6 +1,6 @@
 :root {
   --star-0: #6fd0ff;
-  --star-1: #ff6fae;
+  --star-1: #ff6f6f;
   --star-2: #ffd36e;
   --text: #e8ecf5;
   --muted: #9aa3b5;
@@ -48,11 +48,7 @@ h1 {
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
-  background: linear-gradient(100deg, #ffffff 0%, #dfe6ff 45%, #b9c4ff 75%, #ffc9e4 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 0 24px rgba(140, 160, 255, 0.25));
+  color: #fff;
 }
 
 .subtitle {
