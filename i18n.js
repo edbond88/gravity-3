@@ -8,7 +8,7 @@
 const STRINGS = {
   en: {
     'doc.title': 'The three-body problem',
-    'title': 'The three-body problem.',
+    'title': 'The three-body proble.',
     'stat.time': 'Time elapsed · years',
     'stat.speeds': 'Star speeds · masses',
     'unit.kms': 'km/s',
@@ -79,7 +79,7 @@ const STRINGS = {
 
   uk: {
     'doc.title': 'Задача трьох тіл',
-    'title': 'Задача трьох тіл.',
+    'title': 'Задача трьох тіл',
     'stat.time': 'Минуло часу · роки',
     'stat.speeds': 'Швидкості · маси зірок',
     'unit.kms': 'км/с',
