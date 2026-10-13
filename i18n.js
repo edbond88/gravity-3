@@ -8,7 +8,7 @@
 const STRINGS = {
   en: {
     'doc.title': 'The three-body problem',
-    'title': 'The three-body proble.',
+    'title': 'The <span class="nowrap">three-body</span> problem',
     'stat.time': 'Time elapsed · years',
     'stat.speeds': 'Star speeds · masses',
     'unit.kms': 'km/s',
@@ -53,6 +53,7 @@ const STRINGS = {
     'speed': 'Speed',
     'speed.title': 'Time speed (− / +)',
     'help.button': 'Help (?)',
+    'settings.button': 'Start and masses',
 
     'help.close': 'Close (Esc)',
     'help.heading': 'How it works',
@@ -124,6 +125,7 @@ const STRINGS = {
     'speed': 'Швидкість',
     'speed.title': 'Швидкість часу (− / +)',
     'help.button': 'Довідка (?)',
+    'settings.button': 'Старт і маси',
 
     'help.close': 'Закрити (Esc)',
     'help.heading': 'Як це працює',

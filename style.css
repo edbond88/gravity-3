@@ -159,6 +159,10 @@ body.paused .controls { opacity: 1; }
 
 .controls button:hover { background: rgba(255, 255, 255, 0.12); }
 
+#btn-settings { display: none; }
+
+.nowrap { white-space: nowrap; }
+
 .controls label { display: flex; align-items: center; gap: 0.5rem; }
 
 .controls input[type="range"] { width: 110px; accent-color: #8fa8ff; }
@@ -226,14 +230,6 @@ body.paused .controls { opacity: 1; }
 
 .masses .note { font-size: 0.7rem; margin-bottom: 0.6rem; max-width: 220px; }
 
-@media (max-width: 760px) {
-  .stats { flex-direction: column; align-items: center; gap: 1rem; margin-top: 1.2rem; }
-  .stat { text-align: center; }
-  .stat .value { padding-left: 0; }
-  .speed-row { gap: 1rem; }
-  .speed { min-width: 0; }
-  .controls { left: 50%; right: auto; transform: translateX(-50%); bottom: 1rem; width: max-content; }
-  .masses { left: 50%; transform: translateX(-50%); bottom: 4rem; }
 }
 
 #btn-help { padding: 0.4rem 0.65rem; }
@@ -342,4 +338,72 @@ body.paused .controls { opacity: 1; }
   color: var(--text);
   background: rgba(143, 168, 255, 0.25);
   border-color: rgba(143, 168, 255, 0.5);
+}
+
+/* ---------------------------------------------------------------------------
+   Phones: compact stats, a full-width controls bar, and the start/masses
+   panel as a sheet opened with the ⚙ button.
+   --------------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .overlay { padding: 2.8rem 1rem 0; }
+  h1 { font-size: 6.6vw; line-height: 1.1; text-wrap: balance; }
+  .lang { top: 0.6rem; right: 0.6rem; }
+
+  .stats { flex-direction: column; align-items: center; gap: 0.6rem; margin-top: 1rem; }
+  .stat { display: flex; align-items: baseline; justify-content: center; gap: 0.7rem; }
+  .stat .label { margin-bottom: 0; font-size: 0.68rem; }
+  .stat .value { padding-left: 0; font-size: 1.2rem; }
+  .stat.speeds { flex-direction: column; align-items: center; gap: 0.4rem; }
+  .speed-row { gap: 0.5rem; }
+  .speed {
+    width: 6.6rem;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 0.25rem;
+    font-size: 0.8rem;
+  }
+  .speed b { width: auto; font-size: 1.3rem; }
+  .speed small { flex-basis: 100%; margin-left: 0; text-align: center; white-space: nowrap; }
+
+  .controls {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    opacity: 1;
+  }
+  .controls button { padding: 0.5rem 0.8rem; }
+  #btn-settings { display: inline-block; }
+  #btn-settings, #btn-help { padding: 0.5rem 0.7rem; }
+  body.settings-open #btn-settings {
+    background: rgba(143, 168, 255, 0.25);
+    border-color: rgba(143, 168, 255, 0.5);
+  }
+  /* row 1: Pause, Restart, Sound · row 2: Speed, ⚙, ? */
+  .controls label { flex: 1 1 200px; justify-content: center; order: 1; }
+  #btn-settings { order: 2; }
+  #btn-help { order: 3; }
+  .controls input[type="range"] { flex: 1; max-width: 220px; }
+  .drag-hint { flex-basis: 100%; margin: 0; text-align: center; order: -1; }
+
+  .masses {
+    display: none;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(var(--controls-h, 5.5rem) + 1.25rem);
+    z-index: 6;
+    padding: 1rem;
+    border-radius: 12px;
+    background: rgba(18, 18, 28, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    opacity: 1;
+  }
+  body.settings-open .masses { display: flex; }
+  .masses select { align-self: stretch; padding: 0.5rem; }
+  .masses .note { max-width: none; }
+  .masses input[type="range"] { flex: 1; width: auto; }
+  .masses button { padding: 0.5rem 0.8rem; }
 }

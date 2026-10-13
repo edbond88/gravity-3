@@ -17,6 +17,8 @@ const TRAIL_MAX_DURATION = 12;   // presets show one full period, up to this
 const TRAIL_MIN_DIST = 0.015;    // AU between stored trail points
 const TRAIL_MAX_POINTS = 8000;
 
+const MOBILE_WIDTH = 760;        // px — matches the media query in style.css
+
 const COLORS = ['#6fd0ff', '#ff6f6f', '#ffd36e'];
 
 // ---------------------------------------------------------------------------
@@ -441,9 +443,14 @@ function systemDissolved(list) {
 // COM after a star is dragged doesn't make the picture jump.
 const camera = { scale: 0, cx: 0, cy: 0, ox: 0, oy: 0 };
 
+const controlsEl = document.querySelector('.controls');
+
 function viewport() {
   const top = statsEl.getBoundingClientRect().bottom + 30;
-  const bottom = height - 50;
+  // On phones the controls span the full width, so keep the stars above them.
+  const bottom = width <= MOBILE_WIDTH
+    ? controlsEl.getBoundingClientRect().top - 20
+    : height - 50;
   return {
     cx: width / 2,
     cy: (top + bottom) / 2,
@@ -663,6 +670,20 @@ function shuffleMasses() {
   else restart();
 }
 
+// On phones the start/masses panel is a sheet toggled from the controls bar;
+// it sits right above the bar, whose height changes as it wraps.
+function setSettings(open) {
+  document.body.classList.toggle('settings-open', open);
+}
+
+document.getElementById('btn-settings').addEventListener('click', () => {
+  setSettings(!document.body.classList.contains('settings-open'));
+});
+canvas.addEventListener('pointerdown', () => setSettings(false));
+new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--controls-h', `${controlsEl.offsetHeight}px`);
+}).observe(controlsEl);
+
 const helpEl = document.getElementById('help');
 
 function setHelp(open) {
@@ -679,6 +700,7 @@ window.addEventListener('keydown', (e) => {
     if (e.code === 'Escape') setHelp(false);
     return; // other shortcuts are off while help is open
   }
+  if (e.code === 'Escape') { setSettings(false); return; }
   if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
   else if (e.code === 'KeyR') restart();
   else if (e.code === 'KeyM') toggleSound();
