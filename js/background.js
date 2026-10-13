@@ -5,9 +5,9 @@
 // the camera's zoom and offset by a different amount, so the sky has depth.
 // ---------------------------------------------------------------------------
 const BG_LAYERS = [
-  { depth: 0.08, density: 1 / 9000, rMax: 0.7, alpha: 0.3, drift: 1.5 },
-  { depth: 0.2, density: 1 / 14000, rMax: 1.1, alpha: 0.45, drift: 3 },
-  { depth: 0.4, density: 1 / 40000, rMax: 1.7, alpha: 0.6, drift: 6 },
+  { depth: 0.08, density: 1 / 3000, rMax: 0.7, alpha: 0.3, drift: 1.5 },
+  { depth: 0.2, density: 1 / 5500, rMax: 1.1, alpha: 0.45, drift: 3 },
+  { depth: 0.4, density: 1 / 16000, rMax: 1.7, alpha: 0.6, drift: 6 },
 ];
 const nebula = document.createElement('canvas');
 let haze = null;
