@@ -17,7 +17,8 @@ An interactive simulation of three stars pulling on each other with gravity — 
 
   Most of them are unstable, so they hold their shape for a few periods and then fall apart into chaos.
 - **Drag stars** — pause, move any star somewhere else, and play; the centre of mass is recomputed.
-- **Sound** — close encounters thump, panned to where they happen.
+- **Sound and light** — close encounters thump, panned to where they happen, and flash with a shock ring and a spray of sparks.
+- **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. Animation is toned down when the system asks for reduced motion.
 - **Auto-restart** — when a star escapes, a new system starts.
 - **Built-in help** — press **?** for a short guide and the list of shortcuts.
 - **English and Ukrainian** — switch the language in the top-right corner. The choice is remembered; on the first visit it follows the browser's language.

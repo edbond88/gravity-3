@@ -40,30 +40,110 @@ function resize() {
     c.width = Math.round(width * dpr);
     c.height = Math.round(height * dpr);
   }
-  drawBackground();
+  generateBackground();
 }
 
-function drawBackground() {
-  bg.setTransform(dpr, 0, 0, dpr, 0, 0);
-  bg.clearRect(0, 0, width, height);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // faint violet haze near the bottom
-  const haze = bg.createRadialGradient(width * 0.55, height * 1.05, 0, width * 0.55, height * 1.05, height * 0.8);
+// ---------------------------------------------------------------------------
+// Background: a nebula and three layers of distant stars. Each layer follows
+// the camera's zoom and offset by a different amount, so the sky has depth.
+// ---------------------------------------------------------------------------
+const BG_LAYERS = [
+  { depth: 0.08, density: 1 / 9000, rMax: 0.7, alpha: 0.3, drift: 1.5 },
+  { depth: 0.2, density: 1 / 14000, rMax: 1.1, alpha: 0.45, drift: 3 },
+  { depth: 0.4, density: 1 / 40000, rMax: 1.7, alpha: 0.6, drift: 6 },
+];
+const NEBULA_MARGIN = 1.6; // nebula canvas covers this × the screen, so zooming out shows no edge
+const NEBULA_RES = 0.35;   // it's all soft gradients, so a low resolution is plenty
+const nebula = document.createElement('canvas');
+let haze = null;
+
+function generateBackground() {
+  for (const layer of BG_LAYERS) {
+    const count = Math.round(width * height * layer.density);
+    layer.stars = Array.from({ length: count }, () => ({
+      u: Math.random(),
+      v: Math.random(),
+      r: Math.random() ** 3 * layer.rMax + 0.25,
+      a: layer.alpha * (0.2 + Math.random() * 0.8),
+      tint: Math.random() < 0.15 ? (Math.random() < 0.5 ? '255,215,190' : '190,215,255') : '205,212,255',
+      twinkle: Math.random() < 0.25 ? 1 + Math.random() * 2.5 : 0, // Hz, 0 = steady
+      phase: Math.random() * Math.PI * 2,
+    }));
+  }
+
+  const nw = width * NEBULA_MARGIN, nh = height * NEBULA_MARGIN;
+  nebula.width = Math.max(1, Math.round(nw * NEBULA_RES));
+  nebula.height = Math.max(1, Math.round(nh * NEBULA_RES));
+  const n = nebula.getContext('2d');
+  n.setTransform(NEBULA_RES, 0, 0, NEBULA_RES, 0, 0);
+  const palette = ['90,50,160', '40,90,170', '150,50,120', '30,120,140'];
+  const clouds = 5 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < clouds; i++) {
+    const x = nw * (0.15 + Math.random() * 0.7);
+    const y = nh * (0.15 + Math.random() * 0.7);
+    const r = Math.max(nw, nh) * (0.15 + Math.random() * 0.25);
+    const g = n.createRadialGradient(x, y, 0, x, y, r);
+    const c = palette[i % palette.length];
+    const a = 0.025 + Math.random() * 0.035;
+    g.addColorStop(0, `rgba(${c},${a})`);
+    g.addColorStop(0.5, `rgba(${c},${a * 0.4})`);
+    g.addColorStop(1, `rgba(${c},0)`);
+    n.fillStyle = g;
+    n.fillRect(0, 0, nw, nh);
+  }
+
+  // faint violet haze near the bottom, fixed to the screen
+  haze = bg.createRadialGradient(width * 0.55, height * 1.05, 0, width * 0.55, height * 1.05, height * 0.8);
   haze.addColorStop(0, 'rgba(90, 50, 160, 0.12)');
   haze.addColorStop(1, 'rgba(90, 50, 160, 0)');
+}
+
+// Wraps v into [-period/2, period/2).
+const wrap = (v, period) => ((((v + period / 2) % period) + period) % period) - period / 2;
+
+function drawBackground(now) {
+  bg.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bg.clearRect(0, 0, width, height);
   bg.fillStyle = haze;
   bg.fillRect(0, 0, width, height);
 
-  // static field of distant stars
-  const count = Math.round((width * height) / 5000);
-  for (let i = 0; i < count; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const r = Math.random() ** 3 * 1.1 + 0.25;
-    bg.fillStyle = `rgba(200, 210, 255, ${0.08 + Math.random() * 0.4})`;
-    bg.beginPath();
-    bg.arc(x, y, r, 0, Math.PI * 2);
-    bg.fill();
+  // How far the camera has zoomed out from its closest view (1 = fully in).
+  const zoom = camera.scale ? Math.min(1, camera.scale / closestScale()) : 1;
+  const cx = width / 2, cy = height / 2;
+  const time = reducedMotion ? 0 : now;
+
+  const ns = Math.max(1 / NEBULA_MARGIN, zoom ** 0.05);
+  const nw = width * NEBULA_MARGIN * ns, nh = height * NEBULA_MARGIN * ns;
+  bg.drawImage(nebula, cx - nw / 2 + camera.ox * camera.scale * 0.03, cy - nh / 2 + camera.oy * camera.scale * 0.03, nw, nh);
+
+  for (const layer of BG_LAYERS) {
+    const s = Math.max(0.5, zoom ** layer.depth);
+    // The star field is a tile of the screen's size, scaled by s and repeated.
+    const pw = width * s, ph = height * s;
+    const offX = camera.ox * camera.scale * layer.depth + time * layer.drift;
+    const offY = camera.oy * camera.scale * layer.depth;
+    const nx = Math.ceil(width / pw / 2), ny = Math.ceil(height / ph / 2);
+    const rs = Math.sqrt(s);
+    for (const st of layer.stars) {
+      let a = st.a;
+      if (st.twinkle && time) a *= 0.65 + 0.35 * Math.sin(time * st.twinkle * 2 * Math.PI + st.phase);
+      bg.fillStyle = `rgba(${st.tint},${a})`;
+      const bx = wrap((st.u - 0.5) * pw + offX, pw);
+      const by = wrap((st.v - 0.5) * ph + offY, ph);
+      for (let i = -nx; i <= nx; i++) {
+        const x = cx + bx + i * pw;
+        if (x < -2 || x > width + 2) continue;
+        for (let j = -ny; j <= ny; j++) {
+          const y = cy + by + j * ph;
+          if (y < -2 || y > height + 2) continue;
+          bg.beginPath();
+          bg.arc(x, y, st.r * rs, 0, Math.PI * 2);
+          bg.fill();
+        }
+      }
+    }
   }
 }
 
@@ -353,7 +433,7 @@ function recordTrails(list, t) {
     const tr = b.trail;
     const last = tr[tr.length - 1];
     if (!last || Math.hypot(b.x - last.x, b.y - last.y) > TRAIL_MIN_DIST || t - last.t > 0.1) {
-      tr.push({ x: b.x, y: b.y, t });
+      tr.push({ x: b.x, y: b.y, t, v: Math.hypot(b.vx, b.vy) });
       if (tr.length > TRAIL_MAX_POINTS) tr.shift();
     }
   }
@@ -407,6 +487,7 @@ function detectEncounters() {
       const pan = Math.max(-1, Math.min(1, (x / width) * 2 - 1)) * 0.7;
       const pitch = Math.sqrt(2.4 / (a.mass + b.mass)); // heavier pair → lower
       sound.thump(intensity, pan, pitch);
+      spawnBurst(a, b, (a.x * a.mass + b.x * b.mass) / (a.mass + b.mass), (a.y * a.mass + b.y * b.mass) / (a.mass + b.mass), intensity);
     }
     e.falling = r < e.prev;
     e.prev = r;
@@ -459,6 +540,12 @@ function viewport() {
   };
 }
 
+const MIN_EXTENT = 2.5;   // AU — never zoom in further than this
+const VIEW_MARGIN = 1.15;
+
+// The scale of the closest view the camera allows.
+const closestScale = () => viewport().halfH / (MIN_EXTENT * VIEW_MARGIN);
+
 function updateCamera(realDt) {
   const vp = viewport();
   camera.cx = vp.cx;
@@ -467,11 +554,11 @@ function updateCamera(realDt) {
   const settle = Math.exp(-realDt * 2.5);
   camera.ox *= settle;
   camera.oy *= settle;
-  let extent = 2.5;
+  let extent = MIN_EXTENT;
   for (const b of bodies) {
     extent = Math.max(extent, Math.abs(b.x + camera.ox) * vp.halfH / vp.halfW, Math.abs(b.y + camera.oy));
   }
-  const target = vp.halfH / (extent * 1.15);
+  const target = vp.halfH / (extent * VIEW_MARGIN);
   if (!camera.scale) { camera.scale = target; return; }
   const speed = target < camera.scale ? 3 : 0.6; // zoom out quickly, in gently
   camera.scale += (target - camera.scale) * (1 - Math.exp(-realDt * speed));
@@ -485,63 +572,258 @@ const toWorldY = (sy) => (sy - camera.cy) / camera.scale - camera.oy;
 // ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
-const RGB = Object.fromEntries(COLORS.map((hex) => {
+const mix = (c1, c2, f) => c1.map((v, i) => Math.round(v + (c2[i] - v) * f));
+const toRgb = (hex) => {
   const n = parseInt(hex.slice(1), 16);
-  return [hex, `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`];
-}));
-const rgba = (hex, a) => `rgba(${RGB[hex]},${a})`;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+const COLOR_RGB = Object.fromEntries(COLORS.map((hex) => [hex, toRgb(hex)]));
+const rgba = (hex, a) => `rgba(${COLOR_RGB[hex]},${a})`;
+const WHITE = [255, 250, 240];
+
+// Trails glow, taper from the star to the tail and run white-hot where the
+// star moved fast. Neighbouring segments look alike, so runs of them that fall
+// into the same bucket are stroked as one path.
+const TRAIL_BUCKETS = 24;
 
 function drawTrail(b) {
   const tr = b.trail;
   if (tr.length < 2) return;
-  ctx.lineWidth = 1.4;
+  const pts = tr.concat({ x: b.x, y: b.y, t: simTime, v: Math.hypot(b.vx, b.vy) });
+  let vMin = Infinity, vMax = 0;
+  for (const p of pts) { vMin = Math.min(vMin, p.v); vMax = Math.max(vMax, p.v); }
+  const vSpan = Math.max(vMax - vMin, vMax * 0.2, 1e-9);
+  const base = COLOR_RGB[b.color];
+  const widthScale = 0.8 + 0.25 * Math.sqrt(b.mass);
+
+  // butt caps: round ones would overlap where runs meet and show as beads
   ctx.lineCap = 'butt';
   ctx.lineJoin = 'round';
-  // each segment gets its own alpha: opaque at the star, transparent at the tail
-  for (let i = 0; i < tr.length - 1; i++) {
-    const age = (simTime - tr[i + 1].t) / trailDuration;
-    const alpha = Math.max(0, 1 - age) ** 1.5 * 0.85;
-    if (alpha < 0.005) continue;
-    ctx.strokeStyle = rgba(b.color, alpha);
-    ctx.beginPath();
-    ctx.moveTo(toScreenX(tr[i].x), toScreenY(tr[i].y));
-    ctx.lineTo(toScreenX(tr[i + 1].x), toScreenY(tr[i + 1].y));
+  ctx.globalCompositeOperation = 'lighter';
+
+  let key = -1, fresh = 0, hot = 0;
+  const flush = () => {
+    if (key < 0) return;
+    const alpha = fresh ** 1.5;
+    const rgb = mix(base, WHITE, hot ** 1.5 * 0.45).join(',');
+    const w = (0.6 + 2 * fresh) * widthScale;
+    ctx.strokeStyle = `rgba(${rgb},${alpha * 0.1})`;  // wide soft glow
+    ctx.lineWidth = w * 5;
     ctx.stroke();
+    ctx.strokeStyle = `rgba(${rgb},${alpha * 0.7})`;  // bright core
+    ctx.lineWidth = w;
+    ctx.stroke();
+  };
+
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p = pts[i], q = pts[i + 1];
+    const f = Math.max(0, 1 - (simTime - q.t) / trailDuration);
+    if (f < 0.03) continue;
+    const h = Math.min(1, (q.v - vMin) / vSpan);
+    const k = Math.round(f * TRAIL_BUCKETS) * (TRAIL_BUCKETS + 1) + Math.round(h * 6);
+    if (k !== key) {
+      flush();
+      key = k; fresh = Math.round(f * TRAIL_BUCKETS) / TRAIL_BUCKETS; hot = Math.round(h * 6) / 6;
+      ctx.beginPath();
+      ctx.moveTo(toScreenX(p.x), toScreenY(p.y));
+    }
+    ctx.lineTo(toScreenX(q.x), toScreenY(q.y));
   }
-  // connect last stored point to the star's current position
-  const last = tr[tr.length - 1];
-  ctx.strokeStyle = rgba(b.color, 0.85);
+  flush();
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// Surface colour by mass, like main-sequence stars: light ones burn orange,
+// heavy ones blue-white.
+const TEMPERATURE = [
+  [0.2, [255, 160, 90]],
+  [0.6, [255, 205, 150]],
+  [1.2, [255, 245, 230]],
+  [2.5, [215, 230, 255]],
+  [5, [165, 195, 255]],
+];
+
+function temperatureColor(mass) {
+  const m = Math.max(TEMPERATURE[0][0], Math.min(TEMPERATURE.at(-1)[0], mass));
+  let i = 0;
+  while (m > TEMPERATURE[i + 1][0]) i++;
+  const [m0, c0] = TEMPERATURE[i], [m1, c1] = TEMPERATURE[i + 1];
+  return mix(c0, c1, Math.log(m / m0) / Math.log(m1 / m0)).join(',');
+}
+
+// Rays: a slowly turning cross, each arm breathing on its own, plus faint
+// glints that flare up at random angles and fade away.
+const SPIKES = [
+  { angle: 0, length: 1, freq: 1.3 }, { angle: Math.PI / 2, length: 0.6, freq: 1.9 },
+  { angle: Math.PI / 4, length: 0.35, freq: 2.7 }, { angle: -Math.PI / 4, length: 0.35, freq: 2.3 },
+];
+const GLINTS = 5;
+const SPIN = [0.07, -0.05, 0.09]; // rad/s, per star — a full turn takes a minute or two
+
+// Deterministic 0…1 noise from two integers.
+const hash = (a, b) => {
+  const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
+  return v - Math.floor(v);
+};
+
+function drawRay(x, y, angle, len, width, color, alpha) {
+  const dx = Math.cos(angle) * len, dy = Math.sin(angle) * len;
+  const g = ctx.createLinearGradient(x - dx, y - dy, x + dx, y + dy);
+  g.addColorStop(0, rgba(color, 0));
+  g.addColorStop(0.42, rgba(color, 0.35 * alpha));
+  g.addColorStop(0.5, `rgba(255,255,255,${0.7 * alpha})`);
+  g.addColorStop(0.58, rgba(color, 0.35 * alpha));
+  g.addColorStop(1, rgba(color, 0));
+  ctx.strokeStyle = g;
+  ctx.lineWidth = width;
   ctx.beginPath();
-  ctx.moveTo(toScreenX(last.x), toScreenY(last.y));
-  ctx.lineTo(toScreenX(b.x), toScreenY(b.y));
+  ctx.moveTo(x - dx, y - dy);
+  ctx.lineTo(x + dx, y + dy);
   ctx.stroke();
 }
 
-function drawStar(b) {
+function drawStar(b, i, now) {
   const x = toScreenX(b.x), y = toScreenY(b.y);
+  const t = reducedMotion ? 0 : now;
+  // flicker: two incommensurate sines per star
+  const tw = 1 + 0.05 * Math.sin(t * 5.3 + i * 2.1) + 0.035 * Math.sin(t * 11.7 + i * 4.7);
+  const flare = 1 + starFlare(b) * 1.5;
+  const temp = temperatureColor(b.mass);
 
   // soft halo
-  const haloR = 45 + b.mass * 25;
+  const haloR = (45 + b.mass * 25) * tw * Math.sqrt(flare);
   const halo = ctx.createRadialGradient(x, y, 0, x, y, haloR);
-  halo.addColorStop(0, rgba(b.color, 0.28));
-  halo.addColorStop(0.25, rgba(b.color, 0.1));
+  halo.addColorStop(0, rgba(b.color, Math.min(0.6, 0.28 * flare)));
+  halo.addColorStop(0.25, rgba(b.color, 0.1 * flare));
   halo.addColorStop(1, rgba(b.color, 0));
   ctx.fillStyle = halo;
   ctx.beginPath();
   ctx.arc(x, y, haloR, 0, Math.PI * 2);
   ctx.fill();
 
-  // bright core with a coloured rim
+  // rays
   const coreR = 2.5 + b.mass * 1.5;
-  const core = ctx.createRadialGradient(x, y, 0, x, y, coreR * 1.6);
+  const baseLen = coreR * (7 + 3 * b.mass ** 0.5) * tw * flare;
+  const axis = i * 0.7 + t * SPIN[i];
+  ctx.lineCap = 'round';
+  for (const [k, sp] of SPIKES.entries()) {
+    const breathe = t ? 0.78 + 0.22 * Math.sin(t * sp.freq + i * 1.7 + k * 2.4) : 1;
+    const len = baseLen * sp.length * breathe;
+    drawRay(x, y, axis + sp.angle, len, k === 0 ? 1.3 : 0.9, b.color, Math.min(1, sp.length * 1.4) * breathe);
+  }
+  for (let g = 0; g < GLINTS && t; g++) {
+    // each glint lives for `period` seconds, then reappears at a new angle
+    const period = 1.6 + hash(i, g) * 2.4;
+    const phase = t / period + hash(g, i + 7);
+    const cycle = Math.floor(phase);
+    const life = phase - cycle;
+    const alpha = Math.sin(Math.PI * life) ** 3 * 0.5;
+    if (alpha < 0.02) continue;
+    const angle = hash(cycle, g * 13 + i) * Math.PI;
+    const len = baseLen * (0.3 + 0.4 * hash(cycle + 3, g + i));
+    drawRay(x, y, angle, len, 0.6, b.color, alpha);
+  }
+
+  // white-hot core, the star's surface colour, then its identifying colour
+  const r = coreR * 1.6 * (0.97 + 0.03 * tw * 2);
+  const core = ctx.createRadialGradient(x, y, 0, x, y, r);
   core.addColorStop(0, 'rgba(255,255,255,1)');
-  core.addColorStop(0.45, 'rgba(255,255,255,0.95)');
-  core.addColorStop(0.65, rgba(b.color, 1));
+  core.addColorStop(0.35, 'rgba(255,255,255,0.95)');
+  core.addColorStop(0.55, `rgba(${temp},1)`);
+  core.addColorStop(0.75, rgba(b.color, 0.9));
   core.addColorStop(1, rgba(b.color, 0));
   ctx.fillStyle = core;
   ctx.beginPath();
-  ctx.arc(x, y, coreR * 1.6, 0, Math.PI * 2);
+  ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
+}
+
+// ---------------------------------------------------------------------------
+// Close-encounter bursts: a flash, an expanding ring and a spray of sparks at
+// the point of closest approach. Positions are in world space so a burst stays
+// where it happened; the stars involved flare up for a moment.
+// ---------------------------------------------------------------------------
+const MAX_BURSTS = 12;
+let bursts = [];
+let frameNow = 0; // seconds, real time of the current frame
+
+function spawnBurst(a, b, wx, wy, intensity) {
+  if (bursts.length >= MAX_BURSTS) bursts.shift();
+  const colors = [COLOR_RGB[a.color], COLOR_RGB[b.color]];
+  const count = reducedMotion ? 0 : Math.round(10 + 30 * intensity);
+  bursts.push({
+    x: wx, y: wy, born: frameNow, intensity, a, b,
+    life: 0.9 + 0.8 * intensity,
+    color: mix(colors[0], colors[1], 0.5).join(','),
+    sparks: Array.from({ length: count }, () => ({
+      angle: Math.random() * Math.PI * 2,
+      speed: (60 + Math.random() * 220) * (0.5 + intensity),
+      color: mix(colors[Math.random() < 0.5 ? 0 : 1], WHITE, Math.random() * 0.6).join(','),
+      life: 0.4 + Math.random() * 0.6,
+    })),
+  });
+}
+
+// 0…1: how strongly a star is flaring from a recent burst it took part in.
+function starFlare(body) {
+  let f = 0;
+  for (const s of bursts) {
+    if (s.a !== body && s.b !== body) continue;
+    const age = frameNow - s.born;
+    f = Math.max(f, s.intensity * Math.exp(-age * 6));
+  }
+  return f;
+}
+
+function drawBursts() {
+  bursts = bursts.filter((s) => frameNow - s.born < s.life);
+  for (const s of bursts) {
+    const age = frameNow - s.born;
+    const p = age / s.life;
+    const x = toScreenX(s.x), y = toScreenY(s.y);
+    const I = s.intensity;
+    const k = Math.min(1, Math.min(width, height) / 700); // smaller bursts on small screens
+
+    // flash
+    const flash = I * Math.exp(-age * 9);
+    if (flash > 0.01) {
+      const fr = (25 + 70 * I) * k;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, fr);
+      g.addColorStop(0, `rgba(255,255,255,${0.8 * flash})`);
+      g.addColorStop(0.3, `rgba(${s.color},${0.4 * flash})`);
+      g.addColorStop(1, `rgba(${s.color},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, fr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // shock ring
+    const ringR = 6 + (40 + 150 * I) * k * (1 - (1 - p) ** 3);
+    ctx.strokeStyle = `rgba(${s.color},${0.55 * I * (1 - p) ** 2})`;
+    ctx.lineWidth = 1 + 2.5 * I * (1 - p);
+    ctx.beginPath();
+    ctx.arc(x, y, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // sparks fly out and slow down; each is drawn as a short streak
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.3;
+    for (const sp of s.sparks) {
+      const sa = age / (sp.life * s.life);
+      if (sa >= 1) continue;
+      const decay = 3;
+      const dist = (sp.speed * k / decay) * (1 - Math.exp(-age * decay));
+      const vel = sp.speed * Math.exp(-age * decay);
+      const cos = Math.cos(sp.angle), sin = Math.sin(sp.angle);
+      const tail = Math.min(dist, 4 + vel * 0.04);
+      ctx.strokeStyle = `rgba(${sp.color},${(1 - sa) ** 1.5})`;
+      ctx.beginPath();
+      ctx.moveTo(x + cos * (dist - tail), y + sin * (dist - tail));
+      ctx.lineTo(x + cos * dist, y + sin * dist);
+      ctx.stroke();
+    }
+  }
 }
 
 function render() {
@@ -549,7 +831,8 @@ function render() {
   ctx.clearRect(0, 0, width, height);
   for (const b of bodies) drawTrail(b);
   ctx.globalCompositeOperation = 'lighter';
-  for (const b of bodies) drawStar(b);
+  drawBursts();
+  bodies.forEach((b, i) => drawStar(b, i, frameNow));
   ctx.globalCompositeOperation = 'source-over';
 }
 
@@ -625,6 +908,7 @@ function reset() {
   camera.ox = camera.oy = 0;
   bodies = createBodies();
   resetEncounters();
+  bursts = [];
   simTime = 0;
   camera.scale = 0;
   hudTimer = 0;
@@ -782,12 +1066,14 @@ let lastFrame = performance.now();
 function frame(now) {
   const realDt = Math.min((now - lastFrame) / 1000, 0.05);
   lastFrame = now;
+  frameNow = now / 1000;
 
   if (!paused) {
     advance(realDt * rate);
     if (!restarting && systemDissolved(bodies)) restart();
   }
   updateCamera(realDt);
+  drawBackground(frameNow);
   render();
   updateHud(realDt);
   requestAnimationFrame(frame);
