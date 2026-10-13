@@ -9,7 +9,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 ## Features
 
 - **Real physics** — Newtonian gravity in AU, years and solar masses, integrated with velocity Verlet and an adaptive time step that shrinks during close encounters.
-- **Adjustable masses** — set each star's mass from 0.2 to 5 M☉, or shuffle them.
+- **Adjustable masses** — set each star's mass from 0.2 to 5 M☉, or shuffle them. The current speed and mass of every star are shown at the top.
 - **Known solutions** — besides random chaotic starts, pick a famous configuration:
   - classical: Lagrange's equilateral triangle and Euler's collinear solution;
   - periodic orbits: the figure-eight (Moore, Chenciner & Montgomery) and the butterfly, moth, goggles, dragonfly and yin-yang orbits (Šuvakov & Dmitrašinović, 2013);
@@ -19,6 +19,8 @@ An interactive simulation of three stars pulling on each other with gravity — 
 - **Drag stars** — pause, move any star somewhere else, and play; the centre of mass is recomputed.
 - **Sound** — close encounters thump, panned to where they happen.
 - **Auto-restart** — when a star escapes, a new system starts.
+- **Built-in help** — press **?** for a short guide and the list of shortcuts.
+- **English and Ukrainian** — switch the language in the top-right corner. The choice is remembered; on the first visit it follows the browser's language.
 
 ## Controls
 
@@ -30,6 +32,10 @@ An interactive simulation of three stars pulling on each other with gravity — 
 | M | Sound on / off |
 | + / − | Faster / slower time |
 | 1 … 9, 0 | Choose a starting configuration |
+| ? / H | Show / hide help |
+| Esc | Close help |
+
+With the simulation paused, drag a star with the mouse (or a finger) to move it.
 
 ## Running locally
 
@@ -40,3 +46,13 @@ python3 -m http.server 8173
 ```
 
 Then open <http://localhost:8173>.
+
+## Project structure
+
+| File | What's inside |
+|---|---|
+| `index.html` | Page layout, controls and the help dialog |
+| `main.js` | Physics, starting configurations, camera, rendering, controls |
+| `audio.js` | Sound effects for close encounters |
+| `i18n.js` | English and Ukrainian strings and the language switcher |
+| `style.css` | Styles |

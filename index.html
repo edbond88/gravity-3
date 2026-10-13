@@ -6,7 +6,7 @@
   <title>The three-body problem</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600&family=Syne:wght@700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Space+Grotesk:wght@400;500;600&family=Syne:wght@700;800&family=Unbounded:wght@700;800&family=Onest:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,110 +15,109 @@
 
   <div class="overlay">
     <header>
-      <h1>The three-body problem.</h1>
+      <h1 data-i18n="title"></h1>
     </header>
 
     <section class="stats">
       <div class="stat">
-        <div class="label">Time elapsed · years</div>
+        <div class="label" data-i18n="stat.time"></div>
         <div class="value" id="time">0</div>
       </div>
       <div class="stat speeds">
-        <div class="label">Star speeds · masses</div>
+        <div class="label" data-i18n="stat.speeds"></div>
         <div class="speed-row">
-          <span class="speed" style="--c: var(--star-0)"><b id="speed-0">0</b> km/s <small><span id="mass-0">0</span> M☉</small></span>
-          <span class="speed" style="--c: var(--star-1)"><b id="speed-1">0</b> km/s <small><span id="mass-1">0</span> M☉</small></span>
-          <span class="speed" style="--c: var(--star-2)"><b id="speed-2">0</b> km/s <small><span id="mass-2">0</span> M☉</small></span>
+          <span class="speed" style="--c: var(--star-0)"><b id="speed-0">0</b> <span data-i18n="unit.kms"></span> <small><span id="mass-0">0</span> M☉</small></span>
+          <span class="speed" style="--c: var(--star-1)"><b id="speed-1">0</b> <span data-i18n="unit.kms"></span> <small><span id="mass-1">0</span> M☉</small></span>
+          <span class="speed" style="--c: var(--star-2)"><b id="speed-2">0</b> <span data-i18n="unit.kms"></span> <small><span id="mass-2">0</span> M☉</small></span>
         </div>
       </div>
     </section>
   </div>
 
+  <div class="lang" data-i18n-title="lang.title">
+    <button data-lang="en">EN</button>
+    <button data-lang="uk">УК</button>
+  </div>
+
   <div class="masses">
-    <div class="label">Start</div>
-    <select id="preset" title="Starting configuration (1…9, 0)">
-      <option value="chaos" data-note="Random start · chaotic">Chaos</option>
-      <optgroup label="Classical">
-        <option value="lagrange" data-note="Lagrange, 1772 · equilateral triangle · unstable">Lagrange triangle</option>
-        <option value="euler" data-note="Euler, 1767 · stars on a rotating line · unstable">Euler line</option>
+    <div class="label" data-i18n="start"></div>
+    <select id="preset" data-i18n-title="preset.title">
+      <option value="chaos" data-note="note.chaos" data-i18n="preset.chaos"></option>
+      <optgroup data-i18n-label="group.classical">
+        <option value="lagrange" data-note="note.lagrange" data-i18n="preset.lagrange"></option>
+        <option value="euler" data-note="note.euler" data-i18n="preset.euler"></option>
       </optgroup>
-      <optgroup label="Periodic orbits · equal masses">
-        <option value="figure8" data-note="Moore 1993, Chenciner & Montgomery 2000 · stable">Figure-8</option>
-        <option value="butterfly" data-note="Šuvakov & Dmitrašinović, 2013 · unstable">Butterfly</option>
-        <option value="moth" data-note="Šuvakov & Dmitrašinović, 2013 · unstable">Moth</option>
-        <option value="goggles" data-note="Šuvakov & Dmitrašinović, 2013 · unstable">Goggles</option>
-        <option value="dragonfly" data-note="Šuvakov & Dmitrašinović, 2013 · unstable">Dragonfly</option>
-        <option value="yinyang" data-note="Šuvakov & Dmitrašinović, 2013 · unstable">Yin-yang</option>
+      <optgroup data-i18n-label="group.periodic">
+        <option value="figure8" data-note="note.figure8" data-i18n="preset.figure8"></option>
+        <option value="butterfly" data-note="note.suvakov" data-i18n="preset.butterfly"></option>
+        <option value="moth" data-note="note.suvakov" data-i18n="preset.moth"></option>
+        <option value="goggles" data-note="note.suvakov" data-i18n="preset.goggles"></option>
+        <option value="dragonfly" data-note="note.suvakov" data-i18n="preset.dragonfly"></option>
+        <option value="yinyang" data-note="note.suvakov" data-i18n="preset.yinyang"></option>
       </optgroup>
-      <optgroup label="Hierarchical">
-        <option value="hierarchical" data-note="Tight binary + distant star · stable">Binary + outer star</option>
+      <optgroup data-i18n-label="group.hierarchical">
+        <option value="hierarchical" data-note="note.hierarchical" data-i18n="preset.hierarchical"></option>
       </optgroup>
     </select>
-    <div class="note" id="preset-note">Random start · chaotic</div>
-    <div class="label">Masses</div>
-    <label style="--c: var(--star-0)" title="Changing a mass restarts the simulation">
+    <div class="note" id="preset-note"></div>
+    <div class="label" data-i18n="masses"></div>
+    <label style="--c: var(--star-0)" data-i18n-title="mass.title">
       <i></i>
       <input id="mass-range-0" type="range" min="0.2" max="5" step="0.05" value="1">
       <span id="mass-label-0">1.00</span> M☉
     </label>
-    <label style="--c: var(--star-1)" title="Changing a mass restarts the simulation">
+    <label style="--c: var(--star-1)" data-i18n-title="mass.title">
       <i></i>
       <input id="mass-range-1" type="range" min="0.2" max="5" step="0.05" value="1">
       <span id="mass-label-1">1.00</span> M☉
     </label>
-    <label style="--c: var(--star-2)" title="Changing a mass restarts the simulation">
+    <label style="--c: var(--star-2)" data-i18n-title="mass.title">
       <i></i>
       <input id="mass-range-2" type="range" min="0.2" max="5" step="0.05" value="1">
       <span id="mass-label-2">1.00</span> M☉
     </label>
-    <button id="btn-random-masses" title="Random masses (N)">Shuffle masses</button>
+    <button id="btn-random-masses" data-i18n="shuffle" data-i18n-title="shuffle.title"></button>
   </div>
 
   <div class="controls">
-    <span class="drag-hint">Drag a star to move it</span>
-    <button id="btn-pause" title="Pause / play (Space)">Pause</button>
-    <button id="btn-restart" title="New stars (R)">Restart</button>
-    <button id="btn-sound" title="Sound on / off (M)">Sound: off</button>
-    <label title="Time speed (− / +)">
-      Speed
+    <span class="drag-hint" data-i18n="drag.hint"></span>
+    <button id="btn-pause" data-i18n-title="pause.title"></button>
+    <button id="btn-restart" data-i18n="restart" data-i18n-title="restart.title"></button>
+    <button id="btn-sound" data-i18n-title="sound.title"></button>
+    <label data-i18n-title="speed.title">
+      <span data-i18n="speed"></span>
       <input id="speed-range" type="range" min="-2" max="2" step="0.25" value="0">
       <span id="speed-label">1×</span>
     </label>
-    <button id="btn-help" title="Help (?)">?</button>
+    <button id="btn-help" data-i18n-title="help.button">?</button>
   </div>
 
   <div class="help" id="help" hidden>
     <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
-      <button class="help-close" id="help-close" title="Close (Esc)">×</button>
-      <h2 id="help-title">How it works</h2>
-      <p>
-        Three stars pull on each other with Newtonian gravity. There is no general
-        formula for their motion — tiny differences grow until the system becomes
-        chaotic, and usually one star is flung away. Then a new system starts.
-      </p>
+      <button class="help-close" id="help-close" data-i18n-title="help.close">×</button>
+      <h2 id="help-title" data-i18n="help.heading"></h2>
+      <p data-i18n="help.intro"></p>
       <ul>
-        <li><b>Start</b> — a random chaotic start, or a known solution: Lagrange's triangle,
-          Euler's line, the figure-eight and other periodic orbits, or a stable binary with a
-          distant star. Most solutions are unstable and fall apart after a few periods.</li>
-        <li><b>Masses</b> — set each star's mass in solar masses. Changing one restarts the
-          simulation. Orbits marked “equal masses” switch back to chaos.</li>
-        <li><b>Drag stars</b> — pause, drag any star to a new place and press play.</li>
+        <li data-i18n-html="help.start"></li>
+        <li data-i18n-html="help.masses"></li>
+        <li data-i18n-html="help.drag"></li>
       </ul>
-      <h3>Keyboard shortcuts</h3>
+      <h3 data-i18n="help.keys"></h3>
       <dl class="keys">
-        <dt><kbd>Space</kbd></dt><dd>Pause / play</dd>
-        <dt><kbd>R</kbd></dt><dd>Restart</dd>
-        <dt><kbd>N</kbd></dt><dd>Shuffle masses</dd>
-        <dt><kbd>M</kbd></dt><dd>Sound on / off</dd>
-        <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Faster / slower time</dd>
-        <dt><kbd>1</kbd> … <kbd>9</kbd> <kbd>0</kbd></dt><dd>Choose a start, in list order</dd>
-        <dt><kbd>?</kbd> <kbd>H</kbd></dt><dd>Show / hide this help</dd>
-        <dt><kbd>Esc</kbd></dt><dd>Close help</dd>
+        <dt><kbd data-i18n="key.space"></kbd></dt><dd data-i18n="key.pause"></dd>
+        <dt><kbd>R</kbd></dt><dd data-i18n="key.restart"></dd>
+        <dt><kbd>N</kbd></dt><dd data-i18n="key.shuffle"></dd>
+        <dt><kbd>M</kbd></dt><dd data-i18n="key.sound"></dd>
+        <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd data-i18n="key.speed"></dd>
+        <dt><kbd>1</kbd> … <kbd>9</kbd> <kbd>0</kbd></dt><dd data-i18n="key.presets"></dd>
+        <dt><kbd>?</kbd> <kbd>H</kbd></dt><dd data-i18n="key.help"></dd>
+        <dt><kbd>Esc</kbd></dt><dd data-i18n="key.close"></dd>
       </dl>
     </div>
   </div>
 
   <script src="audio.js"></script>
+  <script src="i18n.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

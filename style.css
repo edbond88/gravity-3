@@ -9,6 +9,12 @@
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 
+/* Syne and Space Grotesk have no Cyrillic */
+:root:lang(uk) {
+  --font-display: "Unbounded", sans-serif;
+  --font-text: "Onest", -apple-system, "Helvetica Neue", Arial, sans-serif;
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -304,3 +310,36 @@ body.paused .controls { opacity: 1; }
 }
 
 .help-close:hover { color: var(--text); }
+
+.lang {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 5;
+  display: flex;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: opacity 0.3s;
+}
+
+.lang:hover { opacity: 1; }
+
+.lang button {
+  font: inherit;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+
+.lang button:first-child { border-radius: 6px 0 0 6px; }
+.lang button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+.lang button:hover { color: var(--text); }
+
+.lang button.active {
+  color: var(--text);
+  background: rgba(143, 168, 255, 0.25);
+  border-color: rgba(143, 168, 255, 0.5);
+}

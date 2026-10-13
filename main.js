@@ -576,7 +576,7 @@ const speedLabel = document.getElementById('speed-label');
 function setPaused(p) {
   if (!p && drag) dropStar();
   paused = p;
-  pauseBtn.textContent = paused ? 'Play' : 'Pause';
+  pauseBtn.textContent = t(paused ? 'play' : 'pause');
   document.body.classList.toggle('paused', paused);
   if (!paused) canvas.style.cursor = '';
 }
@@ -608,7 +608,7 @@ const presetNote = document.getElementById('preset-note');
 function setPreset(p) {
   preset = p;
   presetSelect.value = p;
-  presetNote.textContent = presetSelect.selectedOptions[0].dataset.note;
+  presetNote.textContent = t(presetSelect.selectedOptions[0].dataset.note);
   if (PRESETS[p].equal) for (let i = 0; i < 3; i++) setMass(i, 1);
   restart();
 }
@@ -638,7 +638,7 @@ const soundBtn = document.getElementById('btn-sound');
 
 function toggleSound() {
   sound.setEnabled(!sound.enabled);
-  soundBtn.textContent = sound.enabled ? 'Sound: on' : 'Sound: off';
+  soundBtn.textContent = t(sound.enabled ? 'sound.on' : 'sound.off');
 }
 
 pauseBtn.addEventListener('click', () => setPaused(!paused));
@@ -774,6 +774,12 @@ function frame(now) {
 canvas.style.transition = 'opacity 0.9s ease';
 window.addEventListener('resize', resize);
 resize();
+window.addEventListener('langchange', () => {
+  pauseBtn.textContent = t(paused ? 'play' : 'pause');
+  soundBtn.textContent = t(sound.enabled ? 'sound.on' : 'sound.off');
+  presetNote.textContent = t(presetSelect.selectedOptions[0].dataset.note);
+});
+applyLang();
 setSpeed(0);
 randomizeMasses();
 reset();
