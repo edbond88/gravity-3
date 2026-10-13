@@ -64,8 +64,9 @@ export class Flashes {
       const age = frameNow - s.born;
       const x = toScreenX(s.x), y = toScreenY(s.y);
       const I = s.intensity;
+      if (showWaves) this.wave(s, x, y, age, k, opacity);
+      if (!showBursts) return;
       this.flash(f, s, x, y, age, k, opacity);
-      this.wave(s, x, y, age, k, opacity);
       for (const sp of s.sparks) this.spark(sp, x, y, age, k, I);
       for (const em of s.embers) this.ember(em, x, y, age, k);
     });

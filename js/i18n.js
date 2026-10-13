@@ -63,6 +63,8 @@ const STRINGS = {
     'legend.escape': 'escaping',
     'bursts': 'Flashes',
     'bursts.title': 'Flash and sparks at close encounters (F)',
+    'waves': 'Shock waves',
+    'waves.title': 'Close encounters send out a wave that bends the picture behind it (W)',
     'bloom': 'Glow',
     'bloom.title': 'Bright light bleeds softly into its surroundings, like in a camera (B)',
 
@@ -110,6 +112,7 @@ const STRINGS = {
     'key.ui': 'Hide / show controls',
     'key.trails': 'Trails on / off',
     'key.bursts': 'Flashes on / off',
+    'key.waves': 'Shock waves on / off',
     'key.bloom': 'Glow on / off',
     'key.trailColor': 'Trail colour: speed / energy',
     'key.speed': 'Faster / slower time',
@@ -177,6 +180,8 @@ const STRINGS = {
     'legend.escape': 'тікає',
     'bursts': 'Спалахи',
     'bursts.title': 'Спалах та іскри при зближенні (F)',
+    'waves': 'Ударні хвилі',
+    'waves.title': 'Тісне зближення посилає хвилю, що викривлює все позаду неї (W)',
     'bloom': 'Сяйво',
     'bloom.title': 'Яскраве світло м\'яко розтікається довкола, як у камері (B)',
 
@@ -225,6 +230,7 @@ const STRINGS = {
     'key.ui': 'Сховати / показати елементи керування',
     'key.trails': 'Увімкнути / вимкнути хвости',
     'key.bursts': 'Увімкнути / вимкнути спалахи',
+    'key.waves': 'Увімкнути / вимкнути ударні хвилі',
     'key.bloom': 'Увімкнути / вимкнути сяйво',
     'key.trailColor': 'Колір хвоста: швидкість / енергія',
     'key.speed': 'Швидше / повільніше',

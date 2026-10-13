@@ -10,8 +10,10 @@ const MAX_BURSTS = 12;
 let bursts = [];
 let frameNow = 0; // seconds, real time of the current frame
 
+// Flashes (with sparks, embers and the stars flaring) and shock waves are
+// switched on and off separately; a burst is kept if either is on.
 function spawnBurst(a, b, wx, wy, intensity) {
-  if (!showBursts) return;
+  if (!showBursts && !showWaves) return;
   if (bursts.length >= MAX_BURSTS) bursts.shift();
   const colors = [COLOR_RGB[a.color], COLOR_RGB[b.color]];
   const pick = () => colors[Math.random() < 0.5 ? 0 : 1];
@@ -42,6 +44,7 @@ function spawnBurst(a, b, wx, wy, intensity) {
 
 // 0…1: how strongly a star is flaring from a recent burst it took part in.
 function starFlare(body) {
+  if (!showBursts) return 0;
   let f = 0;
   for (const s of bursts) {
     if (s.a !== body && s.b !== body) continue;

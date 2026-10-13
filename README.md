@@ -20,6 +20,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 - **Energy** — colour the trails by energy to see whether each star is bound, at escape speed or already escaping. The energy drift |ΔE/E₀| at the top shows how accurately the integrator conserves energy.
 - **Drag stars** — grab any star. Paused, move it somewhere else; running, hold it while the others orbit around it, and throw it — when let go it keeps the speed you gave it. The centre of mass is recomputed.
 - **Sound and light** — close encounters thump, panned to where they happen, and flash with a spray of sparks.
+- **Shock waves** — each close encounter sends out a wave that bends the stars, trails and field lines behind it, like heat haze. It can be turned off separately from the flashes.
 - **Glow** — bright light bleeds softly into its surroundings, like in a camera (bloom): star cores, white-hot trails and flashes shine.
 - **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. The background is modelled on the real sky: thousands of faint stars and a few bright ones with tiny spikes, mostly white and yellowish with some orange and blue, gathered into clouds. Animation is toned down when the system asks for reduced motion.
 - **Auto-restart** — when a star escapes, a new system starts.
@@ -37,6 +38,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 | G | Gravity field: off / rubber sheet / heat map |
 | T | Trails on / off |
 | F | Flashes on / off |
+| W | Shock waves on / off |
 | B | Glow (bloom) on / off |
 | E | Trail colour: speed / energy |
 | U | Hide / show the controls |

@@ -102,13 +102,26 @@ let showBursts = localStorage.getItem('bursts') !== 'off';
 function setBursts(on) {
   showBursts = on;
   burstsCheckbox.checked = on;
-  if (!on) bursts = [];
   localStorage.setItem('bursts', on ? 'on' : 'off');
 }
 
 burstsCheckbox.addEventListener('change', () => {
   setBursts(burstsCheckbox.checked);
   burstsCheckbox.blur(); // keep keyboard shortcuts working
+});
+
+const wavesCheckbox = document.getElementById('waves');
+let showWaves = localStorage.getItem('waves') !== 'off';
+
+function setWaves(on) {
+  showWaves = on;
+  wavesCheckbox.checked = on;
+  localStorage.setItem('waves', on ? 'on' : 'off');
+}
+
+wavesCheckbox.addEventListener('change', () => {
+  setWaves(wavesCheckbox.checked);
+  wavesCheckbox.blur(); // keep keyboard shortcuts working
 });
 
 const bloomCheckbox = document.getElementById('bloom');
@@ -203,6 +216,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyU') setUiHidden(!uiHidden);
   else if (e.code === 'KeyT') setTrails(!showTrails);
   else if (e.code === 'KeyF') setBursts(!showBursts);
+  else if (e.code === 'KeyW') setWaves(!showWaves);
   else if (e.code === 'KeyB') setBloom(!showBloom);
   else if (e.code === 'KeyE') setTrailColor(trailColor === 'energy' ? 'speed' : 'energy');
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
