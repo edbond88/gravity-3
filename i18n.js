@@ -9,7 +9,9 @@ const STRINGS = {
   en: {
     'doc.title': 'The three-body problem',
     'title': 'The <span class="nowrap">three-body</span> problem',
-    'stat.time': 'Time elapsed · years',
+    'stat.time': 'Time elapsed',
+    'unit.year.one': 'year',
+    'unit.year.other': 'years',
     'stat.speeds': 'Star speeds · masses',
     'unit.kms': 'km/s',
     'lang.title': 'Language',
@@ -98,7 +100,11 @@ const STRINGS = {
   uk: {
     'doc.title': 'Задача трьох тіл',
     'title': 'Задача трьох тіл',
-    'stat.time': 'Минуло часу · роки',
+    'stat.time': 'Минуло часу',
+    'unit.year.one': 'рік',
+    'unit.year.few': 'роки',
+    'unit.year.many': 'років',
+    'unit.year.other': 'року',
     'stat.speeds': 'Швидкості · маси зірок',
     'unit.kms': 'км/с',
     'lang.title': 'Мова',

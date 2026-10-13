@@ -849,6 +849,9 @@ function render() {
 // HUD
 // ---------------------------------------------------------------------------
 const timeEl = document.getElementById('time');
+const timeUnitEl = document.getElementById('time-unit');
+// "1 year / 2 years", "1 рік / 2 роки / 5 років"
+const yearUnit = (n) => t(`unit.year.${new Intl.PluralRules(lang).select(n)}`);
 const speedEls = [0, 1, 2].map((i) => document.getElementById(`speed-${i}`));
 const massEls = [0, 1, 2].map((i) => document.getElementById(`mass-${i}`));
 let hudTimer = 0;
@@ -857,7 +860,9 @@ function updateHud(realDt) {
   hudTimer -= realDt;
   if (hudTimer > 0) return;
   hudTimer = 0.1;
-  timeEl.textContent = Math.floor(simTime).toString();
+  const years = Math.floor(simTime);
+  timeEl.textContent = years.toString();
+  timeUnitEl.textContent = yearUnit(years);
   bodies.forEach((b, i) => {
     speedEls[i].textContent = Math.round(Math.hypot(b.vx, b.vy) * AU_PER_YEAR_TO_KM_S).toString();
     massEls[i].textContent = b.mass.toFixed(2);
@@ -1140,6 +1145,7 @@ resize();
 window.addEventListener('langchange', () => {
   pauseBtn.textContent = t(paused ? 'play' : 'pause');
   uiBtn.title = t(uiHidden ? 'ui.show' : 'ui.hide');
+  hudTimer = 0; // re-render the year unit in the new language
   soundBtn.textContent = t(sound.enabled ? 'sound.on' : 'sound.off');
   presetNote.textContent = t(presetSelect.selectedOptions[0].dataset.note);
 });
