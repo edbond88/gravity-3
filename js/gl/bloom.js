@@ -5,6 +5,7 @@
 // picked out with a soft threshold, blurred through a chain of ever smaller
 // copies (dual Kawase: down, then back up, adding each level), and added on top
 // of the scene, which itself is clipped to white as the 2D canvas used to be.
+// Together they roll off softly into white.
 // ---------------------------------------------------------------------------
 import {
   HalfFloatType, LinearFilter, Mesh, OrthographicCamera, PlaneGeometry, Scene, WebGLRenderTarget,
@@ -15,6 +16,7 @@ const LEVELS = 6;        // each half the size of the one before
 const THRESHOLD = 0.6;   // brightness where bloom starts…
 const KNEE = 0.3;        // …easing in over this range rather than switching on
 const STRENGTH = 0.9;
+const SPREAD = 0.55;     // each wider level adds this much less: glare fades with distance
 
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
@@ -35,7 +37,9 @@ const DOWN = /* glsl */ `
   }
 `;
 
-// Only the part of the light above the threshold, with a quadratic knee.
+// Only the part of the light above the threshold, with a quadratic knee. Very
+// bright light is compressed, so a flash on top of two star cores glows, rather
+// than swallowing everything around it in white.
 const prefilterFragment = /* glsl */ `
   uniform sampler2D uMap;
   uniform vec2 uTexel;
@@ -47,7 +51,8 @@ const prefilterFragment = /* glsl */ `
     float soft = clamp(br - ${(THRESHOLD - KNEE).toFixed(4)}, 0.0, ${(2 * KNEE).toFixed(4)});
     soft = soft * soft / ${(4 * KNEE).toFixed(4)};
     float w = max(soft, br - ${THRESHOLD.toFixed(4)}) / max(br, 1e-4);
-    gl_FragColor = vec4(c * w, 1.0);
+    c *= w;
+    gl_FragColor = vec4(c / (1.0 + 0.6 * max(c.r, max(c.g, c.b))), 1.0);
   }
 `;
 
@@ -64,6 +69,7 @@ const upFragment = /* glsl */ `
   uniform sampler2D uMap;
   uniform vec2 uTexel;
   varying vec2 vUv;
+  const float SPREAD = ${SPREAD.toFixed(4)};
   void main() {
     vec2 h = uTexel * 0.5;
     vec3 c = texture2D(uMap, vUv + vec2(-h.x * 2.0, 0.0)).rgb
@@ -74,17 +80,22 @@ const upFragment = /* glsl */ `
       + texture2D(uMap, vUv + vec2(h.x, -h.y)).rgb * 2.0
       + texture2D(uMap, vUv + vec2(0.0, -h.y * 2.0)).rgb
       + texture2D(uMap, vUv + vec2(-h.x, -h.y)).rgb * 2.0;
-    gl_FragColor = vec4(c / 12.0, 1.0);
+    gl_FragColor = vec4(c / 12.0 * SPREAD, 1.0);
   }
 `;
 
+// Up to 0.8 the picture is unchanged; above, it rolls off smoothly into white
+// instead of clipping, so overlapping light keeps some shape.
 const compositeFragment = /* glsl */ `
   uniform sampler2D uScene;
   uniform sampler2D uBloom;
   varying vec2 vUv;
+  vec3 shoulder(vec3 x) {
+    return mix(x, 0.8 + 0.2 * (1.0 - exp(-(x - 0.8) / 0.2)), step(0.8, x));
+  }
   void main() {
     vec3 scene = min(texture2D(uScene, vUv).rgb, 1.0);
-    gl_FragColor = vec4(scene + texture2D(uBloom, vUv).rgb * ${STRENGTH.toFixed(4)}, 1.0);
+    gl_FragColor = vec4(shoulder(scene + texture2D(uBloom, vUv).rgb * ${STRENGTH.toFixed(4)}), 1.0);
   }
 `;
 
