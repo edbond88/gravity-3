@@ -47,3 +47,6 @@ export const SCREEN_VERTEX = /* glsl */ `
 `;
 
 export const rgb = (c) => c.map((v) => v / 255);
+
+// What the screen is cleared to: the page background's darkest colour.
+export const CLEAR = 0x04050b;

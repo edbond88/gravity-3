@@ -50,6 +50,7 @@ setField(fieldMode);
 setTrails(showTrails);
 setBursts(showBursts);
 setWaves(showWaves);
+setDust(showDust);
 setBloom(showBloom);
 setTrailColor(trailColor);
 randomizeMasses();

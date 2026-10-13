@@ -1,10 +1,12 @@
 // ---------------------------------------------------------------------------
 // The WebGL renderer: one canvas, one scene, an orthographic camera in CSS
 // pixels with y pointing down. Layers are drawn in the order they are added,
-// back to front: nebula, background stars, gravity field, trails, burst
+// back to front: nebula, background stars, gravity field, dust, trails, burst
 // flashes and sparks, the stars. Then post-processing: bloom and shock waves.
 // ---------------------------------------------------------------------------
 import { LinearSRGBColorSpace, OrthographicCamera, Scene, WebGLRenderer } from 'three';
+import { CLEAR } from './common.js';
+import { Dust } from './dust.js';
 import { Field } from './field.js';
 import { Flashes } from './flashes.js';
 import { Post } from './post.js';
@@ -18,12 +20,13 @@ export class Renderer {
     // management, and lines are anti-aliased by their own shaders.
     this.gl = new WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.gl.outputColorSpace = LinearSRGBColorSpace;
-    this.gl.setClearColor(0x04050b, 1);
+    this.gl.setClearColor(CLEAR, 1);
     this.gl.sortObjects = false; // keep the layers in order
     this.scene = new Scene();
     this.camera = new OrthographicCamera(0, 1, 0, 1, -1, 1);
     this.sky = new Sky(this.scene);
     this.field = new Field(this.scene);
+    this.dust = new Dust(this.scene);
     this.trails = new Trails(this.scene);
     this.flashes = new Flashes(this.scene);
     this.stars = new Stars(this.scene);
@@ -37,6 +40,7 @@ export class Renderer {
     Object.assign(this.camera, { left: 0, right: width, top: 0, bottom: height });
     this.camera.updateProjectionMatrix();
     this.post.setSize(Math.round(width * dpr), Math.round(height * dpr));
+    this.dust.setSize();
     this.sky.generate();
   }
 
@@ -49,6 +53,7 @@ export class Renderer {
 
     this.sky.update(now);
     this.field.update(o);
+    this.dust.update(o, this.gl, this.camera);
     this.trails.update(o);
     this.flashes.update(o);
     this.stars.update(now, o);
