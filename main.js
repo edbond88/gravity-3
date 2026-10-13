@@ -382,6 +382,7 @@ function render() {
 // ---------------------------------------------------------------------------
 const timeEl = document.getElementById('time');
 const speedEls = [0, 1, 2].map((i) => document.getElementById(`speed-${i}`));
+const massEls = [0, 1, 2].map((i) => document.getElementById(`mass-${i}`));
 let hudTimer = 0;
 
 function updateHud(realDt) {
@@ -391,6 +392,7 @@ function updateHud(realDt) {
   timeEl.textContent = Math.floor(simTime).toString();
   bodies.forEach((b, i) => {
     speedEls[i].textContent = Math.round(Math.hypot(b.vx, b.vy) * AU_PER_YEAR_TO_KM_S).toString();
+    massEls[i].textContent = b.mass.toFixed(2);
   });
 }
 
