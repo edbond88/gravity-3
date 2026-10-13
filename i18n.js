@@ -13,6 +13,9 @@ const STRINGS = {
     'unit.year.one': 'year',
     'unit.year.other': 'years',
     'stat.speeds': 'Star speeds · masses',
+    'stat.energy': 'energy drift',
+    'stat.energy.title': 'How far the total energy has drifted from its starting value, |ΔE / E₀|. ' +
+      'Gravity conserves energy, so this only measures the integrator\'s error — it should stay tiny.',
     'unit.kms': 'km/s',
     'lang.title': 'Language',
 
@@ -51,6 +54,12 @@ const STRINGS = {
     'field.note': '⌖ — points where the pulls cancel out',
     'trails': 'Trails',
     'trails.title': 'Show trails (T)',
+    'trailColor.title': 'What the trail colour shows (E)',
+    'trailColor.speed': 'Colour: speed',
+    'trailColor.energy': 'Colour: energy',
+    'legend.bound': 'bound',
+    'legend.edge': 'escape speed',
+    'legend.escape': 'escaping',
     'bursts': 'Flashes',
     'bursts.title': 'Flash and sparks at close encounters (F)',
 
@@ -84,6 +93,9 @@ const STRINGS = {
     'help.field': '<b>Gravity field</b> — show the potential the stars move in: a rubber sheet ' +
       'pulled into wells, or a heat map with isolines. Stars roll downhill; ⌖ marks the points ' +
       'between them where the pulls cancel out.',
+    'help.energy': '<b>Energy</b> — colour the trails by energy to see when a star is bound ' +
+      '(blue), at escape speed (white) or already on its way out (orange) — often long before it ' +
+      'actually leaves. The energy drift at the top checks how accurate the simulation is.',
     'help.keys': 'Keyboard shortcuts',
     'key.space': 'Space',
     'key.pause': 'Pause / play',
@@ -94,6 +106,7 @@ const STRINGS = {
     'key.ui': 'Hide / show controls',
     'key.trails': 'Trails on / off',
     'key.bursts': 'Flashes on / off',
+    'key.trailColor': 'Trail colour: speed / energy',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
     'key.help': 'Show / hide this help',
@@ -109,6 +122,9 @@ const STRINGS = {
     'unit.year.many': 'років',
     'unit.year.other': 'року',
     'stat.speeds': 'Швидкості · маси зірок',
+    'stat.energy': 'похибка енергії',
+    'stat.energy.title': 'Наскільки повна енергія відійшла від початкової, |ΔE / E₀|. ' +
+      'Гравітація зберігає енергію, тож це лише похибка обчислень — вона має лишатися крихітною.',
     'unit.kms': 'км/с',
     'lang.title': 'Мова',
 
@@ -147,6 +163,12 @@ const STRINGS = {
     'field.note': '⌖ — точки, де притягання врівноважується',
     'trails': 'Хвости',
     'trails.title': 'Показувати хвости (T)',
+    'trailColor.title': 'Що показує колір хвоста (E)',
+    'trailColor.speed': 'Колір: швидкість',
+    'trailColor.energy': 'Колір: енергія',
+    'legend.bound': 'зв\'язана',
+    'legend.edge': 'на межі втечі',
+    'legend.escape': 'тікає',
     'bursts': 'Спалахи',
     'bursts.title': 'Спалах та іскри при зближенні (F)',
 
@@ -181,6 +203,9 @@ const STRINGS = {
     'help.field': '<b>Поле тяжіння</b> — покажи потенціал, у якому рухаються зірки: гумове ' +
       'полотно з ямами або теплову карту з ізолініями. Зірки «скочуються» вниз; ⌖ позначає ' +
       'точки між ними, де притягання врівноважується.',
+    'help.energy': '<b>Енергія</b> — розфарбуй хвости за енергією, щоб бачити, коли зірка ' +
+      'зв\'язана (синій), на межі втечі (білий) чи вже тікає (помаранчевий) — часто задовго до ' +
+      'того, як справді вилетить. Похибка енергії вгорі показує, наскільки точна симуляція.',
     'help.keys': 'Клавіші',
     'key.space': 'Пробіл',
     'key.pause': 'Пауза / пуск',
@@ -191,6 +216,7 @@ const STRINGS = {
     'key.ui': 'Сховати / показати елементи керування',
     'key.trails': 'Увімкнути / вимкнути хвости',
     'key.bursts': 'Увімкнути / вимкнути спалахи',
+    'key.trailColor': 'Колір хвоста: швидкість / енергія',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',
     'key.help': 'Показати / сховати довідку',

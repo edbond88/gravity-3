@@ -22,6 +22,7 @@
       <div class="stat">
         <div class="label" data-i18n="stat.time"></div>
         <div class="value"><span id="time">0</span><span class="unit" id="time-unit"></span></div>
+        <div class="drift" data-i18n-title="stat.energy.title"><span data-i18n="stat.energy"></span> <b id="energy">0</b></div>
       </div>
       <div class="stat speeds">
         <div class="label" data-i18n="stat.speeds"></div>
@@ -93,6 +94,15 @@
       <input id="trails" type="checkbox" checked>
       <span data-i18n="trails"></span>
     </label>
+    <select id="trail-color" data-i18n-title="trailColor.title">
+      <option value="speed" data-i18n="trailColor.speed"></option>
+      <option value="energy" data-i18n="trailColor.energy"></option>
+    </select>
+    <div class="note energy-legend" id="trail-color-note" hidden>
+      <span style="--c: rgb(80, 130, 255)" data-i18n="legend.bound"></span> ·
+      <span style="--c: #fff" data-i18n="legend.edge"></span> ·
+      <span style="--c: rgb(255, 125, 50)" data-i18n="legend.escape"></span>
+    </div>
     <label class="toggle" data-i18n-title="bursts.title">
       <input id="bursts" type="checkbox" checked>
       <span data-i18n="bursts"></span>
@@ -123,6 +133,7 @@
         <li data-i18n-html="help.masses"></li>
         <li data-i18n-html="help.drag"></li>
         <li data-i18n-html="help.field"></li>
+        <li data-i18n-html="help.energy"></li>
       </ul>
       <h3 data-i18n="help.keys"></h3>
       <dl class="keys">
@@ -133,6 +144,7 @@
         <dt><kbd>G</kbd></dt><dd data-i18n="key.field"></dd>
         <dt><kbd>T</kbd></dt><dd data-i18n="key.trails"></dd>
         <dt><kbd>F</kbd></dt><dd data-i18n="key.bursts"></dd>
+        <dt><kbd>E</kbd></dt><dd data-i18n="key.trailColor"></dd>
         <dt><kbd>U</kbd></dt><dd data-i18n="key.ui"></dd>
         <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd data-i18n="key.speed"></dd>
         <dt><kbd>1</kbd> … <kbd>9</kbd> <kbd>0</kbd></dt><dd data-i18n="key.presets"></dd>

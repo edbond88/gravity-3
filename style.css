@@ -238,6 +238,23 @@ body.paused .controls { opacity: 1; }
 
 .masses label.toggle { color: var(--text); cursor: pointer; }
 
+.masses .energy-legend span { color: var(--c); }
+
+.drift {
+  margin-top: 0.35rem;
+  padding-left: 2.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+  width: 0; /* overflows instead of widening the column and squeezing the speeds */
+  cursor: help;
+}
+
+#energy { font-weight: 400; color: var(--text); transition: color 0.4s; }
+#energy[data-level="warn"] { color: #f0c060; }
+#energy[data-level="bad"] { color: #ff8a5c; }
+
 .masses label.toggle input { margin: 0; accent-color: #8fa8ff; cursor: pointer; }
 
 }
@@ -414,6 +431,8 @@ body.ui-hidden .controls {
   .stat .label { margin-bottom: 0; font-size: 0.68rem; }
   .stat .value { padding-left: 0; font-size: 1.2rem; }
   .stat .unit { font-size: 0.8rem; }
+  .stat:has(.drift) { flex-wrap: wrap; }
+  .drift { width: auto; flex-basis: 100%; text-align: center; padding-left: 0; margin-top: 0.1rem; font-size: 0.62rem; }
   .stat.speeds { flex-direction: column; align-items: center; gap: 0.4rem; }
   .speed-row { gap: 0.5rem; }
   .speed {

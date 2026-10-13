@@ -393,6 +393,35 @@ function potentialEnergy(list) {
   return pe;
 }
 
+// Total energy with the same softened potential the forces come from, so it
+// is exactly what the integrator should conserve.
+function totalEnergy(list) {
+  let pe = 0;
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      const dx = list[i].x - list[j].x, dy = list[i].y - list[j].y;
+      pe -= (G * list[i].mass * list[j].mass) / Math.sqrt(dx * dx + dy * dy + softening * softening);
+    }
+  }
+  return kineticEnergy(list) + pe;
+}
+
+// How close star i is to escaping the other two: (v / v_escape)² − 1. The
+// speed is taken relative to the pair's centre of mass, the pull from each of
+// the two separately — so a star in a tight binary counts as bound to its
+// partner, and far away it is the usual two-body escape condition.
+// Below 0 it is bound, 0 is exactly escape speed, above 0 it can leave.
+function escapeRatio(list, i) {
+  const s = list[i], p = list[(i + 1) % 3], q = list[(i + 2) % 3];
+  const M = p.mass + q.mass;
+  const dvx = s.vx - (p.vx * p.mass + q.vx * q.mass) / M;
+  const dvy = s.vy - (p.vy * p.mass + q.vy * q.mass) / M;
+  const eps2 = softening * softening;
+  const pull = p.mass / Math.sqrt((s.x - p.x) ** 2 + (s.y - p.y) ** 2 + eps2)
+    + q.mass / Math.sqrt((s.x - q.x) ** 2 + (s.y - q.y) ** 2 + eps2);
+  return (0.5 * (dvx * dvx + dvy * dvy)) / (G * (1 + s.mass / M) * pull) - 1;
+}
+
 function computeAccelerations(list) {
   for (const b of list) { b.ax = 0; b.ay = 0; }
   for (let i = 0; i < list.length; i++) {
@@ -441,7 +470,7 @@ function recordTrails(list, t) {
     const tr = b.trail;
     const last = tr[tr.length - 1];
     if (!last || Math.hypot(b.x - last.x, b.y - last.y) > TRAIL_MIN_DIST || t - last.t > 0.1) {
-      tr.push({ x: b.x, y: b.y, t, v: Math.hypot(b.vx, b.vy) });
+      tr.push({ x: b.x, y: b.y, t, v: Math.hypot(b.vx, b.vy), e: escapeRatio(list, list.indexOf(b)) });
       if (tr.length > TRAIL_MAX_POINTS) tr.shift();
     }
   }
@@ -594,10 +623,22 @@ const WHITE = [255, 250, 240];
 // into the same bucket are stroked as one path.
 const TRAIL_BUCKETS = 24;
 
-function drawTrail(b) {
+// Energy colouring: bound → blue, at escape speed → white, escaping → orange.
+// A little of the star's own colour stays in, so trails can still be told apart.
+const BOUND_RGB = [80, 130, 255];
+const ESCAPE_RGB = [255, 125, 50];
+
+function energyColor(level, base) {
+  const c = level < 0.5 ? mix(BOUND_RGB, WHITE, level * 2) : mix(WHITE, ESCAPE_RGB, level * 2 - 1);
+  return mix(c, base, 0.2);
+}
+
+function drawTrail(b, i) {
   const tr = b.trail;
   if (tr.length < 2) return;
-  const pts = tr.concat({ x: b.x, y: b.y, t: simTime, v: Math.hypot(b.vx, b.vy) });
+  const pts = tr.concat({ x: b.x, y: b.y, t: simTime, v: Math.hypot(b.vx, b.vy), e: escapeRatio(bodies, i) });
+  const byEnergy = trailColor === 'energy';
+  const levels = byEnergy ? 12 : 6;
   let vMin = Infinity, vMax = 0;
   for (const p of pts) { vMin = Math.min(vMin, p.v); vMax = Math.max(vMax, p.v); }
   const vSpan = Math.max(vMax - vMin, vMax * 0.2, 1e-9);
@@ -613,7 +654,7 @@ function drawTrail(b) {
   const flush = () => {
     if (key < 0) return;
     const alpha = fresh ** 1.5;
-    const rgb = mix(base, WHITE, hot ** 1.5 * 0.45).join(',');
+    const rgb = (byEnergy ? energyColor(hot, base) : mix(base, WHITE, hot ** 1.5 * 0.45)).join(',');
     const w = (0.6 + 2 * fresh) * widthScale;
     ctx.strokeStyle = `rgba(${rgb},${alpha * 0.1})`;  // wide soft glow
     ctx.lineWidth = w * 5;
@@ -627,11 +668,13 @@ function drawTrail(b) {
     const p = pts[i], q = pts[i + 1];
     const f = Math.max(0, 1 - (simTime - q.t) / trailDuration);
     if (f < 0.03) continue;
-    const h = Math.min(1, (q.v - vMin) / vSpan);
-    const k = Math.round(f * TRAIL_BUCKETS) * (TRAIL_BUCKETS + 1) + Math.round(h * 6);
+    const h = byEnergy
+      ? 0.5 + 0.5 * Math.tanh(2.5 * q.e) // white only close to escape speed
+      : Math.min(1, (q.v - vMin) / vSpan);
+    const k = Math.round(f * TRAIL_BUCKETS) * (levels + 1) + Math.round(h * levels);
     if (k !== key) {
       flush();
-      key = k; fresh = Math.round(f * TRAIL_BUCKETS) / TRAIL_BUCKETS; hot = Math.round(h * 6) / 6;
+      key = k; fresh = Math.round(f * TRAIL_BUCKETS) / TRAIL_BUCKETS; hot = Math.round(h * levels) / levels;
       ctx.beginPath();
       ctx.moveTo(toScreenX(p.x), toScreenY(p.y));
     }
@@ -832,7 +875,7 @@ function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
   drawField();
-  if (showTrails) for (const b of bodies) drawTrail(b);
+  if (showTrails) bodies.forEach(drawTrail);
   ctx.globalCompositeOperation = 'lighter';
   drawBursts();
   bodies.forEach((b, i) => drawStar(b, i, frameNow));
@@ -844,6 +887,19 @@ function render() {
 // ---------------------------------------------------------------------------
 const timeEl = document.getElementById('time');
 const timeUnitEl = document.getElementById('time-unit');
+const energyEl = document.getElementById('energy');
+let energy0 = 0;
+
+const SUPERSCRIPT = { '-': '⁻', 0: '⁰', 1: '¹', 2: '²', 3: '³', 4: '⁴', 5: '⁵', 6: '⁶', 7: '⁷', 8: '⁸', 9: '⁹' };
+
+// 0.0000021 → "2.1×10⁻⁶"; from 1% up it reads better as a percentage.
+function formatDrift(x) {
+  if (x >= 0.01) return `${(x * 100).toFixed(x >= 0.1 ? 0 : 1)}%`;
+  if (x < 1e-12) return '<10⁻¹²';
+  const exp = Math.floor(Math.log10(x));
+  const mant = x / 10 ** exp;
+  return `${mant.toFixed(1)}×10${String(exp).replace(/./g, (c) => SUPERSCRIPT[c])}`;
+}
 // "1 year / 2 years", "1 рік / 2 роки / 5 років"
 const yearUnit = (n) => t(`unit.year.${new Intl.PluralRules(lang).select(n)}`);
 const speedEls = [0, 1, 2].map((i) => document.getElementById(`speed-${i}`));
@@ -857,6 +913,11 @@ function updateHud(realDt) {
   const years = Math.floor(simTime);
   timeEl.textContent = years.toString();
   timeUnitEl.textContent = yearUnit(years);
+  if (!drag) {
+    const drift = Math.abs((totalEnergy(bodies) - energy0) / (Math.abs(energy0) || 1));
+    energyEl.textContent = formatDrift(drift);
+    energyEl.dataset.level = drift < 1e-3 ? 'ok' : drift < 0.05 ? 'warn' : 'bad';
+  }
   bodies.forEach((b, i) => {
     speedEls[i].textContent = Math.round(Math.hypot(b.vx, b.vy) * AU_PER_YEAR_TO_KM_S).toString();
     massEls[i].textContent = b.mass.toFixed(2);
@@ -915,6 +976,7 @@ function reset() {
   drag = null;
   camera.ox = camera.oy = 0;
   bodies = createBodies();
+  energy0 = totalEnergy(bodies);
   resetEncounters();
   bursts = [];
   simTime = 0;
@@ -963,6 +1025,23 @@ function setTrails(on) {
 trailsCheckbox.addEventListener('change', () => {
   setTrails(trailsCheckbox.checked);
   trailsCheckbox.blur(); // keep keyboard shortcuts working
+});
+
+const trailColorSelect = document.getElementById('trail-color');
+const trailColorNote = document.getElementById('trail-color-note');
+const TRAIL_COLORS = ['speed', 'energy'];
+let trailColor = TRAIL_COLORS.includes(localStorage.getItem('trailColor')) ? localStorage.getItem('trailColor') : 'speed';
+
+function setTrailColor(mode) {
+  trailColor = mode;
+  trailColorSelect.value = mode;
+  trailColorNote.hidden = mode !== 'energy';
+  localStorage.setItem('trailColor', mode);
+}
+
+trailColorSelect.addEventListener('change', () => {
+  setTrailColor(trailColorSelect.value);
+  trailColorSelect.blur(); // keep keyboard shortcuts working
 });
 
 const burstsCheckbox = document.getElementById('bursts');
@@ -1058,6 +1137,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyU') setUiHidden(!uiHidden);
   else if (e.code === 'KeyT') setTrails(!showTrails);
   else if (e.code === 'KeyF') setBursts(!showBursts);
+  else if (e.code === 'KeyE') setTrailColor(trailColor === 'energy' ? 'speed' : 'energy');
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
     // 1…9, then 0 for the tenth preset
@@ -1098,6 +1178,7 @@ function dropStar() {
   camera.ox += cx;
   camera.oy += cy;
   computeAccelerations(bodies);
+  energy0 = totalEnergy(bodies); // moving a star changed the energy on purpose
   resetEncounters();
 }
 
@@ -1164,6 +1245,7 @@ setSpeed(0);
 setField(fieldMode);
 setTrails(showTrails);
 setBursts(showBursts);
+setTrailColor(trailColor);
 randomizeMasses();
 reset();
 requestAnimationFrame(frame);
