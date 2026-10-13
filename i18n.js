@@ -51,6 +51,8 @@ const STRINGS = {
     'field.note': '⌖ — points where the pulls cancel out',
     'trails': 'Trails',
     'trails.title': 'Show trails (T)',
+    'bursts': 'Flashes',
+    'bursts.title': 'Flash and sparks at close encounters (F)',
 
     'drag.hint': 'Drag a star to move it',
     'pause': 'Pause',
@@ -91,6 +93,7 @@ const STRINGS = {
     'key.field': 'Gravity field: off / sheet / heat map',
     'key.ui': 'Hide / show controls',
     'key.trails': 'Trails on / off',
+    'key.bursts': 'Flashes on / off',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
     'key.help': 'Show / hide this help',
@@ -144,6 +147,8 @@ const STRINGS = {
     'field.note': '⌖ — точки, де притягання врівноважується',
     'trails': 'Хвости',
     'trails.title': 'Показувати хвости (T)',
+    'bursts': 'Спалахи',
+    'bursts.title': 'Спалах та іскри при зближенні (F)',
 
     'drag.hint': 'Перетягни зірку, щоб перемістити',
     'pause': 'Пауза',
@@ -185,6 +190,7 @@ const STRINGS = {
     'key.field': 'Поле тяжіння: вимк. / полотно / карта',
     'key.ui': 'Сховати / показати елементи керування',
     'key.trails': 'Увімкнути / вимкнути хвости',
+    'key.bursts': 'Увімкнути / вимкнути спалахи',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',
     'key.help': 'Показати / сховати довідку',

@@ -747,15 +747,16 @@ function drawStar(b, i, now) {
 }
 
 // ---------------------------------------------------------------------------
-// Close-encounter bursts: a flash, an expanding ring and a spray of sparks at
-// the point of closest approach. Positions are in world space so a burst stays
-// where it happened; the stars involved flare up for a moment.
+// Close-encounter bursts: a flash and a spray of sparks at the point of
+// closest approach. Positions are in world space so a burst stays where it
+// happened; the stars involved flare up for a moment.
 // ---------------------------------------------------------------------------
 const MAX_BURSTS = 12;
 let bursts = [];
 let frameNow = 0; // seconds, real time of the current frame
 
 function spawnBurst(a, b, wx, wy, intensity) {
+  if (!showBursts) return;
   if (bursts.length >= MAX_BURSTS) bursts.shift();
   const colors = [COLOR_RGB[a.color], COLOR_RGB[b.color]];
   const count = reducedMotion ? 0 : Math.round(10 + 30 * intensity);
@@ -793,26 +794,19 @@ function drawBursts() {
     const k = Math.min(1, Math.min(width, height) / 700); // smaller bursts on small screens
 
     // flash
-    const flash = I * Math.exp(-age * 9);
+    const flash = I * Math.exp(-age * 7);
     if (flash > 0.01) {
-      const fr = (25 + 70 * I) * k;
+      const fr = (28 + 80 * I) * k;
       const g = ctx.createRadialGradient(x, y, 0, x, y, fr);
-      g.addColorStop(0, `rgba(255,255,255,${0.8 * flash})`);
-      g.addColorStop(0.3, `rgba(${s.color},${0.4 * flash})`);
+      g.addColorStop(0, `rgba(255,255,255,${Math.min(1, 1.1 * flash)})`);
+      g.addColorStop(0.12, `rgba(255,255,255,${0.75 * flash})`);
+      g.addColorStop(0.35, `rgba(${s.color},${0.45 * flash})`);
       g.addColorStop(1, `rgba(${s.color},0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(x, y, fr, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // shock ring
-    const ringR = 6 + (40 + 150 * I) * k * (1 - (1 - p) ** 3);
-    ctx.strokeStyle = `rgba(${s.color},${0.55 * I * (1 - p) ** 2})`;
-    ctx.lineWidth = 1 + 2.5 * I * (1 - p);
-    ctx.beginPath();
-    ctx.arc(x, y, ringR, 0, Math.PI * 2);
-    ctx.stroke();
 
     // sparks fly out and slow down; each is drawn as a short streak
     ctx.lineCap = 'round';
@@ -971,6 +965,21 @@ trailsCheckbox.addEventListener('change', () => {
   trailsCheckbox.blur(); // keep keyboard shortcuts working
 });
 
+const burstsCheckbox = document.getElementById('bursts');
+let showBursts = localStorage.getItem('bursts') !== 'off';
+
+function setBursts(on) {
+  showBursts = on;
+  burstsCheckbox.checked = on;
+  if (!on) bursts = [];
+  localStorage.setItem('bursts', on ? 'on' : 'off');
+}
+
+burstsCheckbox.addEventListener('change', () => {
+  setBursts(burstsCheckbox.checked);
+  burstsCheckbox.blur(); // keep keyboard shortcuts working
+});
+
 const fieldSelect = document.getElementById('field');
 
 function setField(mode) {
@@ -1048,6 +1057,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyN') shuffleMasses();
   else if (e.code === 'KeyU') setUiHidden(!uiHidden);
   else if (e.code === 'KeyT') setTrails(!showTrails);
+  else if (e.code === 'KeyF') setBursts(!showBursts);
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
     // 1…9, then 0 for the tenth preset
@@ -1153,6 +1163,7 @@ applyLang();
 setSpeed(0);
 setField(fieldMode);
 setTrails(showTrails);
+setBursts(showBursts);
 randomizeMasses();
 reset();
 requestAnimationFrame(frame);
