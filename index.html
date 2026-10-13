@@ -84,6 +84,38 @@
       <input id="speed-range" type="range" min="-2" max="2" step="0.25" value="0">
       <span id="speed-label">1×</span>
     </label>
+    <button id="btn-help" title="Help (?)">?</button>
+  </div>
+
+  <div class="help" id="help" hidden>
+    <div class="help-card" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <button class="help-close" id="help-close" title="Close (Esc)">×</button>
+      <h2 id="help-title">How it works</h2>
+      <p>
+        Three stars pull on each other with Newtonian gravity. There is no general
+        formula for their motion — tiny differences grow until the system becomes
+        chaotic, and usually one star is flung away. Then a new system starts.
+      </p>
+      <ul>
+        <li><b>Start</b> — a random chaotic start, or a known solution: Lagrange's triangle,
+          Euler's line, the figure-eight and other periodic orbits, or a stable binary with a
+          distant star. Most solutions are unstable and fall apart after a few periods.</li>
+        <li><b>Masses</b> — set each star's mass in solar masses. Changing one restarts the
+          simulation. Orbits marked “equal masses” switch back to chaos.</li>
+        <li><b>Drag stars</b> — pause, drag any star to a new place and press play.</li>
+      </ul>
+      <h3>Keyboard shortcuts</h3>
+      <dl class="keys">
+        <dt><kbd>Space</kbd></dt><dd>Pause / play</dd>
+        <dt><kbd>R</kbd></dt><dd>Restart</dd>
+        <dt><kbd>N</kbd></dt><dd>Shuffle masses</dd>
+        <dt><kbd>M</kbd></dt><dd>Sound on / off</dd>
+        <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>Faster / slower time</dd>
+        <dt><kbd>1</kbd> … <kbd>9</kbd> <kbd>0</kbd></dt><dd>Choose a start, in list order</dd>
+        <dt><kbd>?</kbd> <kbd>H</kbd></dt><dd>Show / hide this help</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Close help</dd>
+      </dl>
+    </div>
   </div>
 
   <script src="audio.js"></script>

@@ -663,7 +663,22 @@ function shuffleMasses() {
   else restart();
 }
 
+const helpEl = document.getElementById('help');
+
+function setHelp(open) {
+  helpEl.hidden = !open;
+}
+
+document.getElementById('btn-help').addEventListener('click', () => setHelp(true));
+document.getElementById('help-close').addEventListener('click', () => setHelp(false));
+helpEl.addEventListener('click', (e) => { if (e.target === helpEl) setHelp(false); });
+
 window.addEventListener('keydown', (e) => {
+  if (e.key === '?' || e.code === 'KeyH') { setHelp(helpEl.hidden); return; }
+  if (!helpEl.hidden) {
+    if (e.code === 'Escape') setHelp(false);
+    return; // other shortcuts are off while help is open
+  }
   if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
   else if (e.code === 'KeyR') restart();
   else if (e.code === 'KeyM') toggleSound();
