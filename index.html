@@ -77,6 +77,13 @@
       <span id="mass-label-2">1.00</span> M☉
     </label>
     <button id="btn-random-masses" data-i18n="shuffle" data-i18n-title="shuffle.title"></button>
+    <div class="label field-label" data-i18n="field"></div>
+    <select id="field" data-i18n-title="field.title">
+      <option value="off" data-i18n="field.off"></option>
+      <option value="grid" data-i18n="field.grid"></option>
+      <option value="heat" data-i18n="field.heat"></option>
+    </select>
+    <div class="note" data-i18n="field.note"></div>
   </div>
 
   <div class="controls">
@@ -102,6 +109,7 @@
         <li data-i18n-html="help.start"></li>
         <li data-i18n-html="help.masses"></li>
         <li data-i18n-html="help.drag"></li>
+        <li data-i18n-html="help.field"></li>
       </ul>
       <h3 data-i18n="help.keys"></h3>
       <dl class="keys">
@@ -109,6 +117,7 @@
         <dt><kbd>R</kbd></dt><dd data-i18n="key.restart"></dd>
         <dt><kbd>N</kbd></dt><dd data-i18n="key.shuffle"></dd>
         <dt><kbd>M</kbd></dt><dd data-i18n="key.sound"></dd>
+        <dt><kbd>G</kbd></dt><dd data-i18n="key.field"></dd>
         <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd data-i18n="key.speed"></dd>
         <dt><kbd>1</kbd> … <kbd>9</kbd> <kbd>0</kbd></dt><dd data-i18n="key.presets"></dd>
         <dt><kbd>?</kbd> <kbd>H</kbd></dt><dd data-i18n="key.help"></dd>
@@ -119,6 +128,7 @@
 
   <script src="audio.js"></script>
   <script src="i18n.js"></script>
+  <script src="field.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

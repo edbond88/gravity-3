@@ -54,8 +54,6 @@ const BG_LAYERS = [
   { depth: 0.2, density: 1 / 14000, rMax: 1.1, alpha: 0.45, drift: 3 },
   { depth: 0.4, density: 1 / 40000, rMax: 1.7, alpha: 0.6, drift: 6 },
 ];
-const NEBULA_MARGIN = 1.6; // nebula canvas covers this × the screen, so zooming out shows no edge
-const NEBULA_RES = 0.35;   // it's all soft gradients, so a low resolution is plenty
 const nebula = document.createElement('canvas');
 let haze = null;
 
@@ -73,17 +71,19 @@ function generateBackground() {
     }));
   }
 
-  const nw = width * NEBULA_MARGIN, nh = height * NEBULA_MARGIN;
-  nebula.width = Math.max(1, Math.round(nw * NEBULA_RES));
-  nebula.height = Math.max(1, Math.round(nh * NEBULA_RES));
+  // The nebula is rendered once at full resolution and drawn 1:1 — scaling
+  // it would also scale the browser's ordered gradient dithering into a
+  // visible grid. Random noise on top breaks up banding in the faint colours.
+  nebula.width = Math.round(width * dpr);
+  nebula.height = Math.round(height * dpr);
   const n = nebula.getContext('2d');
-  n.setTransform(NEBULA_RES, 0, 0, NEBULA_RES, 0, 0);
+  n.setTransform(dpr, 0, 0, dpr, 0, 0);
   const palette = ['90,50,160', '40,90,170', '150,50,120', '30,120,140'];
   const clouds = 5 + Math.floor(Math.random() * 3);
   for (let i = 0; i < clouds; i++) {
-    const x = nw * (0.15 + Math.random() * 0.7);
-    const y = nh * (0.15 + Math.random() * 0.7);
-    const r = Math.max(nw, nh) * (0.15 + Math.random() * 0.25);
+    const x = width * (0.05 + Math.random() * 0.9);
+    const y = height * (0.05 + Math.random() * 0.9);
+    const r = Math.max(width, height) * (0.25 + Math.random() * 0.35);
     const g = n.createRadialGradient(x, y, 0, x, y, r);
     const c = palette[i % palette.length];
     const a = 0.025 + Math.random() * 0.035;
@@ -91,7 +91,15 @@ function generateBackground() {
     g.addColorStop(0.5, `rgba(${c},${a * 0.4})`);
     g.addColorStop(1, `rgba(${c},0)`);
     n.fillStyle = g;
-    n.fillRect(0, 0, nw, nh);
+    n.fillRect(0, 0, width, height);
+  }
+  if (nebula.width && nebula.height) {
+    const img = n.getImageData(0, 0, nebula.width, nebula.height);
+    const d = img.data;
+    for (let i = 3; i < d.length; i += 4) {
+      if (d[i]) d[i] = Math.max(0, d[i] + Math.floor(Math.random() * 3) - 1);
+    }
+    n.putImageData(img, 0, 0);
   }
 
   // faint violet haze near the bottom, fixed to the screen
@@ -114,9 +122,9 @@ function drawBackground(now) {
   const cx = width / 2, cy = height / 2;
   const time = reducedMotion ? 0 : now;
 
-  const ns = Math.max(1 / NEBULA_MARGIN, zoom ** 0.05);
-  const nw = width * NEBULA_MARGIN * ns, nh = height * NEBULA_MARGIN * ns;
-  bg.drawImage(nebula, cx - nw / 2 + camera.ox * camera.scale * 0.03, cy - nh / 2 + camera.oy * camera.scale * 0.03, nw, nh);
+  bg.setTransform(1, 0, 0, 1, 0, 0);
+  bg.drawImage(nebula, 0, 0);
+  bg.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   for (const layer of BG_LAYERS) {
     const s = Math.max(0.5, zoom ** layer.depth);
@@ -829,6 +837,7 @@ function drawBursts() {
 function render() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
+  drawField();
   for (const b of bodies) drawTrail(b);
   ctx.globalCompositeOperation = 'lighter';
   drawBursts();
@@ -943,6 +952,19 @@ massRanges.forEach((el, i) => {
   el.addEventListener('change', () => (PRESETS[preset].equal ? setPreset('chaos') : restart()));
 });
 document.getElementById('btn-random-masses').addEventListener('click', shuffleMasses);
+const fieldSelect = document.getElementById('field');
+
+function setField(mode) {
+  fieldMode = mode;
+  fieldSelect.value = mode;
+  localStorage.setItem('field', mode);
+}
+
+fieldSelect.addEventListener('change', () => {
+  setField(fieldSelect.value);
+  fieldSelect.blur(); // keep keyboard shortcuts working
+});
+
 presetSelect.addEventListener('change', () => {
   setPreset(presetSelect.value);
   presetSelect.blur(); // keep keyboard shortcuts working
@@ -989,6 +1011,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyR') restart();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyN') shuffleMasses();
+  else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
     // 1…9, then 0 for the tenth preset
     const n = (parseInt(e.code.slice(5), 10) + 9) % 10;
@@ -1089,6 +1112,7 @@ window.addEventListener('langchange', () => {
 });
 applyLang();
 setSpeed(0);
+setField(fieldMode);
 randomizeMasses();
 reset();
 requestAnimationFrame(frame);

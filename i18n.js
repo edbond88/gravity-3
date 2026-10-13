@@ -41,6 +41,13 @@ const STRINGS = {
     'shuffle': 'Shuffle masses',
     'shuffle.title': 'Random masses (N)',
 
+    'field': 'Gravity field',
+    'field.title': 'Show the gravitational potential (G)',
+    'field.off': 'Off',
+    'field.grid': 'Rubber sheet',
+    'field.heat': 'Heat map',
+    'field.note': '⌖ — points where the pulls cancel out',
+
     'drag.hint': 'Drag a star to move it',
     'pause': 'Pause',
     'play': 'Play',
@@ -66,12 +73,16 @@ const STRINGS = {
     'help.masses': '<b>Masses</b> — set each star\'s mass in solar masses. Changing one ' +
       'restarts the simulation. Orbits marked “equal masses” switch back to chaos.',
     'help.drag': '<b>Drag stars</b> — pause, drag any star to a new place and press play.',
+    'help.field': '<b>Gravity field</b> — show the potential the stars move in: a rubber sheet ' +
+      'pulled into wells, or a heat map with isolines. Stars roll downhill; ⌖ marks the points ' +
+      'between them where the pulls cancel out.',
     'help.keys': 'Keyboard shortcuts',
     'key.space': 'Space',
     'key.pause': 'Pause / play',
     'key.restart': 'Restart',
     'key.shuffle': 'Shuffle masses',
     'key.sound': 'Sound on / off',
+    'key.field': 'Gravity field: off / sheet / heat map',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
     'key.help': 'Show / hide this help',
@@ -113,6 +124,13 @@ const STRINGS = {
     'shuffle': 'Перемішати маси',
     'shuffle.title': 'Випадкові маси (N)',
 
+    'field': 'Поле тяжіння',
+    'field.title': 'Показати гравітаційний потенціал (G)',
+    'field.off': 'Вимкнено',
+    'field.grid': 'Гумове полотно',
+    'field.heat': 'Теплова карта',
+    'field.note': '⌖ — точки, де притягання врівноважується',
+
     'drag.hint': 'Перетягни зірку, щоб перемістити',
     'pause': 'Пауза',
     'play': 'Пуск',
@@ -139,12 +157,16 @@ const STRINGS = {
       'перезапускає симуляцію. Орбіти з позначкою «рівні маси» перемикаються на хаос.',
     'help.drag': '<b>Перетягування</b> — постав на паузу, перетягни будь-яку зірку на нове ' +
       'місце й натисни пуск.',
+    'help.field': '<b>Поле тяжіння</b> — покажи потенціал, у якому рухаються зірки: гумове ' +
+      'полотно з ямами або теплову карту з ізолініями. Зірки «скочуються» вниз; ⌖ позначає ' +
+      'точки між ними, де притягання врівноважується.',
     'help.keys': 'Клавіші',
     'key.space': 'Пробіл',
     'key.pause': 'Пауза / пуск',
     'key.restart': 'Заново',
     'key.shuffle': 'Перемішати маси',
     'key.sound': 'Увімкнути / вимкнути звук',
+    'key.field': 'Поле тяжіння: вимк. / полотно / карта',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',
     'key.help': 'Показати / сховати довідку',

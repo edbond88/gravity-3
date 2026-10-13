@@ -230,6 +230,8 @@ body.paused .controls { opacity: 1; }
 
 .masses .note { font-size: 0.7rem; margin-bottom: 0.6rem; max-width: 220px; }
 
+.masses .field-label { margin-top: 0.9rem; }
+
 }
 
 #btn-help { padding: 0.4rem 0.65rem; }

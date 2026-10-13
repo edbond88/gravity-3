@@ -16,6 +16,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
   - a stable hierarchical triple: a tight binary with a distant third star.
 
   Most of them are unstable, so they hold their shape for a few periods and then fall apart into chaos.
+- **Gravity field** — show the potential the stars move in, as a rubber sheet pulled into wells or as a heat map with isolines. Points where the stars' pulls cancel out are marked.
 - **Drag stars** — pause, move any star somewhere else, and play; the centre of mass is recomputed.
 - **Sound and light** — close encounters thump, panned to where they happen, and flash with a shock ring and a spray of sparks.
 - **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. Animation is toned down when the system asks for reduced motion.
@@ -31,6 +32,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 | R | Restart |
 | N | Shuffle masses |
 | M | Sound on / off |
+| G | Gravity field: off / rubber sheet / heat map |
 | + / − | Faster / slower time |
 | 1 … 9, 0 | Choose a starting configuration |
 | ? / H | Show / hide help |
@@ -54,6 +56,7 @@ Then open <http://localhost:8173>.
 |---|---|
 | `index.html` | Page layout, controls and the help dialog |
 | `main.js` | Physics, starting configurations, camera, rendering, controls |
+| `field.js` | Gravity field overlay: rubber sheet, heat map, equilibrium points |
 | `audio.js` | Sound effects for close encounters |
 | `i18n.js` | English and Ukrainian strings and the language switcher |
 | `style.css` | Styles |
