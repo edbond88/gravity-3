@@ -71,6 +71,7 @@ let simTime = 0;
 let paused = false;
 let rate = BASE_RATE;
 let restarting = false;
+let masses = [1, 1, 1];
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -91,7 +92,7 @@ function createBodies() {
 
   const spin = Math.random() < 0.5 ? -1 : 1;
   const list = pos.map((p, i) => {
-    const mass = rand(0.8, 2.0);
+    const mass = masses[i];
     // mix of overall rotation and random motion
     const va = rand(0, Math.PI * 2);
     return {
@@ -417,6 +418,19 @@ function setSpeed(exp) {
   speedLabel.textContent = (m < 1 ? m.toFixed(2).replace(/0$/, '') : m.toFixed(m % 1 ? 1 : 0)) + '×';
 }
 
+const massRanges = [0, 1, 2].map((i) => document.getElementById(`mass-range-${i}`));
+const massLabels = [0, 1, 2].map((i) => document.getElementById(`mass-label-${i}`));
+
+function setMass(i, m) {
+  masses[i] = m;
+  massRanges[i].value = m;
+  massLabels[i].textContent = m.toFixed(2);
+}
+
+function randomizeMasses() {
+  for (let i = 0; i < 3; i++) setMass(i, Math.round(rand(0.8, 2.0) * 20) / 20);
+}
+
 function reset() {
   bodies = createBodies();
   resetEncounters();
@@ -447,11 +461,21 @@ pauseBtn.addEventListener('click', () => setPaused(!paused));
 restartBtn.addEventListener('click', restart);
 soundBtn.addEventListener('click', toggleSound);
 speedRange.addEventListener('input', () => setSpeed(parseFloat(speedRange.value)));
+massRanges.forEach((el, i) => {
+  // Label follows the thumb; the simulation restarts once the drag ends.
+  el.addEventListener('input', () => setMass(i, parseFloat(el.value)));
+  el.addEventListener('change', restart);
+});
+document.getElementById('btn-random-masses').addEventListener('click', () => {
+  randomizeMasses();
+  restart();
+});
 
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Space') { e.preventDefault(); setPaused(!paused); }
   else if (e.code === 'KeyR') restart();
   else if (e.code === 'KeyM') toggleSound();
+  else if (e.code === 'KeyN') { randomizeMasses(); restart(); }
   else if (e.key === '+' || e.key === '=') setSpeed(parseFloat(speedRange.value) + 0.25);
   else if (e.key === '-' || e.key === '_') setSpeed(parseFloat(speedRange.value) - 0.25);
 });
@@ -479,5 +503,6 @@ canvas.style.transition = 'opacity 0.9s ease';
 window.addEventListener('resize', resize);
 resize();
 setSpeed(0);
+randomizeMasses();
 reset();
 requestAnimationFrame(frame);

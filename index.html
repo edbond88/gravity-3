@@ -34,6 +34,26 @@
     </section>
   </div>
 
+  <div class="masses" title="Star masses — changing one restarts the simulation">
+    <div class="label">Masses</div>
+    <label style="--c: var(--star-0)">
+      <i></i>
+      <input id="mass-range-0" type="range" min="0.2" max="5" step="0.05" value="1">
+      <span id="mass-label-0">1.00</span> M☉
+    </label>
+    <label style="--c: var(--star-1)">
+      <i></i>
+      <input id="mass-range-1" type="range" min="0.2" max="5" step="0.05" value="1">
+      <span id="mass-label-1">1.00</span> M☉
+    </label>
+    <label style="--c: var(--star-2)">
+      <i></i>
+      <input id="mass-range-2" type="range" min="0.2" max="5" step="0.05" value="1">
+      <span id="mass-label-2">1.00</span> M☉
+    </label>
+    <button id="btn-random-masses" title="Random masses (N)">Random</button>
+  </div>
+
   <div class="controls">
     <button id="btn-pause" title="Pause / play (Space)">Pause</button>
     <button id="btn-restart" title="New stars (R)">Restart</button>
