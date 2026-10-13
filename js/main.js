@@ -49,6 +49,7 @@ setSpeed(0);
 setField(fieldMode);
 setTrails(showTrails);
 setBursts(showBursts);
+setBloom(showBloom);
 setTrailColor(trailColor);
 randomizeMasses();
 reset();

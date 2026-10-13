@@ -20,6 +20,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 - **Energy** — colour the trails by energy to see whether each star is bound, at escape speed or already escaping. The energy drift |ΔE/E₀| at the top shows how accurately the integrator conserves energy.
 - **Drag stars** — grab any star. Paused, move it somewhere else; running, hold it while the others orbit around it, and throw it — when let go it keeps the speed you gave it. The centre of mass is recomputed.
 - **Sound and light** — close encounters thump, panned to where they happen, and flash with a spray of sparks.
+- **Glow** — bright light bleeds softly into its surroundings, like in a camera (bloom): star cores, white-hot trails and flashes shine.
 - **Living sky** — trails glow and turn white-hot where a star moves fast; stars twinkle, show diffraction spikes and are tinted by mass (light ones orange, heavy ones blue-white); the nebula and three layers of background stars shift at different depths as the camera zooms. Animation is toned down when the system asks for reduced motion.
 - **Auto-restart** — when a star escapes, a new system starts.
 - **Built-in help** — press **?** for a short guide and the list of shortcuts.
@@ -36,6 +37,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 | G | Gravity field: off / rubber sheet / heat map |
 | T | Trails on / off |
 | F | Flashes on / off |
+| B | Glow (bloom) on / off |
 | E | Trail colour: speed / energy |
 | U | Hide / show the controls |
 | + / − | Faster / slower time |
@@ -86,6 +88,7 @@ npm run vendor
 | `js/gl/trails.js` | Glowing trails |
 | `js/gl/flashes.js` | Close-encounter flashes and sparks |
 | `js/gl/stars.js` | Star shader: halo, diffraction rays, glints and core |
+| `js/gl/bloom.js` | Bloom: the bright parts of the frame, blurred and added back |
 | `js/gl/strokes.js` | Anti-aliased lines of any width, with glow |
 | `js/gl/common.js` | Blending modes, sprites and full-screen passes shared by the layers |
 | `js/audio.js` | Sound effects for close encounters |

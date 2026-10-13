@@ -63,6 +63,8 @@ const STRINGS = {
     'legend.escape': 'escaping',
     'bursts': 'Flashes',
     'bursts.title': 'Flash and sparks at close encounters (F)',
+    'bloom': 'Glow',
+    'bloom.title': 'Bright light bleeds softly into its surroundings, like in a camera (B)',
 
     'drag.hint': 'Drag a star to move it',
     'pause': 'Pause',
@@ -108,6 +110,7 @@ const STRINGS = {
     'key.ui': 'Hide / show controls',
     'key.trails': 'Trails on / off',
     'key.bursts': 'Flashes on / off',
+    'key.bloom': 'Glow on / off',
     'key.trailColor': 'Trail colour: speed / energy',
     'key.speed': 'Faster / slower time',
     'key.presets': 'Choose a start, in list order',
@@ -174,6 +177,8 @@ const STRINGS = {
     'legend.escape': 'тікає',
     'bursts': 'Спалахи',
     'bursts.title': 'Спалах та іскри при зближенні (F)',
+    'bloom': 'Сяйво',
+    'bloom.title': 'Яскраве світло м\'яко розтікається довкола, як у камері (B)',
 
     'drag.hint': 'Перетягни зірку, щоб перемістити',
     'pause': 'Пауза',
@@ -220,6 +225,7 @@ const STRINGS = {
     'key.ui': 'Сховати / показати елементи керування',
     'key.trails': 'Увімкнути / вимкнути хвости',
     'key.bursts': 'Увімкнути / вимкнути спалахи',
+    'key.bloom': 'Увімкнути / вимкнути сяйво',
     'key.trailColor': 'Колір хвоста: швидкість / енергія',
     'key.speed': 'Швидше / повільніше',
     'key.presets': 'Вибрати старт за порядком у списку',

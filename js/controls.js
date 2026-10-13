@@ -111,6 +111,20 @@ burstsCheckbox.addEventListener('change', () => {
   burstsCheckbox.blur(); // keep keyboard shortcuts working
 });
 
+const bloomCheckbox = document.getElementById('bloom');
+let showBloom = localStorage.getItem('bloom') !== 'off';
+
+function setBloom(on) {
+  showBloom = on;
+  bloomCheckbox.checked = on;
+  localStorage.setItem('bloom', on ? 'on' : 'off');
+}
+
+bloomCheckbox.addEventListener('change', () => {
+  setBloom(bloomCheckbox.checked);
+  bloomCheckbox.blur(); // keep keyboard shortcuts working
+});
+
 const fieldSelect = document.getElementById('field');
 
 function setField(mode) {
@@ -189,6 +203,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'KeyU') setUiHidden(!uiHidden);
   else if (e.code === 'KeyT') setTrails(!showTrails);
   else if (e.code === 'KeyF') setBursts(!showBursts);
+  else if (e.code === 'KeyB') setBloom(!showBloom);
   else if (e.code === 'KeyE') setTrailColor(trailColor === 'energy' ? 'speed' : 'energy');
   else if (e.code === 'KeyG') setField(FIELD_MODES[(FIELD_MODES.indexOf(fieldMode) + 1) % FIELD_MODES.length]);
   else if (/^Digit\d$/.test(e.code)) {
