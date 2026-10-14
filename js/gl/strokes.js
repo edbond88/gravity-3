@@ -4,6 +4,8 @@
 // soft glow; colour, alpha and width can change from point to point. Alpha may
 // go above 1: the scene is drawn in high dynamic range, for the bloom. Joins are
 // mitred, so a line is one continuous strip — no overlaps that show as beads.
+// A line can also carry two free numbers per point (`flow`) for a custom
+// fragment shader to texture it with.
 // ---------------------------------------------------------------------------
 import { BufferAttribute, BufferGeometry, DynamicDrawUsage, Mesh } from 'three';
 import { ADD, material } from './common.js';
@@ -13,16 +15,19 @@ const MAX_MITER = 3; // a sharp turn can't push the corner further out than this
 const vertexShader = /* glsl */ `
   attribute vec4 color;  // rgb, core alpha
   attribute vec4 shape;  // signed distance from the centre line, core half-width, glow half-width, glow alpha
+  attribute vec2 flow;
   varying vec4 vColor;
   varying vec4 vShape;
+  varying vec2 vFlow;
   void main() {
     vColor = color;
     vShape = shape;
+    vFlow = flow;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xy, 0.0, 1.0);
   }
 `;
 
-const fragmentShader = /* glsl */ `
+const FRAGMENT = /* glsl */ `
   uniform float uOpacity;
   varying vec4 vColor;
   varying vec4 vShape;
@@ -39,8 +44,8 @@ const fragmentShader = /* glsl */ `
 `;
 
 export class Strokes {
-  constructor(blend = ADD) {
-    this.uniforms = { uOpacity: { value: 1 } };
+  constructor(blend = ADD, { fragmentShader = FRAGMENT, uniforms = {} } = {}) {
+    this.uniforms = { uOpacity: { value: 1 }, ...uniforms };
     this.geometry = new BufferGeometry();
     this.mesh = new Mesh(this.geometry, material({ vertexShader, fragmentShader, uniforms: this.uniforms, blend }));
     this.mesh.frustumCulled = false;
@@ -57,11 +62,13 @@ export class Strokes {
     this.pos = new Float32Array(n * 2);
     this.col = new Float32Array(n * 4);
     this.shp = new Float32Array(n * 4);
+    this.flw = new Float32Array(n * 2);
     this.idx = new Uint32Array(this.capacity * 6);
     const attr = (array, size) => new BufferAttribute(array, size).setUsage(DynamicDrawUsage);
     this.geometry.setAttribute('position', attr(this.pos, 2));
     this.geometry.setAttribute('color', attr(this.col, 4));
     this.geometry.setAttribute('shape', attr(this.shp, 4));
+    this.geometry.setAttribute('flow', attr(this.flw, 2));
     this.geometry.setIndex(attr(this.idx, 1));
   }
 
@@ -71,18 +78,19 @@ export class Strokes {
   }
 
   // xy: [x0, y0, x1, y1, …] in px. style(i, out) fills out with the look at
-  // point i: [r, g, b (0…1), core alpha, core width, glow width, glow alpha].
+  // point i: [r, g, b (0…1), core alpha, core width, glow width, glow alpha,
+  // flow x, flow y].
   line(xy, style) {
     const n = xy.length / 2;
     if (n < 2) return;
     if (this.points + n > this.capacity) {
       // keep what is already built this frame
-      const { pos, col, shp, idx } = this;
+      const { pos, col, shp, flw, idx } = this;
       this.grow(this.points + n);
-      this.pos.set(pos); this.col.set(col); this.shp.set(shp); this.idx.set(idx);
+      this.pos.set(pos); this.col.set(col); this.shp.set(shp); this.flw.set(flw); this.idx.set(idx);
     }
-    const { pos, col, shp, idx } = this;
-    const s = [0, 0, 0, 0, 1, 0, 0];
+    const { pos, col, shp, flw, idx } = this;
+    const s = [0, 0, 0, 0, 1, 0, 0, 0, 0];
     let nx = 0, ny = 0; // normal of the previous segment
     for (let i = 0; i < n; i++) {
       const x = xy[2 * i], y = xy[2 * i + 1];
@@ -114,6 +122,7 @@ export class Strokes {
         pos[o * 2 + 1] = y + my * half * k * sign;
         col[o * 4] = s[0]; col[o * 4 + 1] = s[1]; col[o * 4 + 2] = s[2]; col[o * 4 + 3] = s[3];
         shp[o * 4] = half * sign; shp[o * 4 + 1] = core; shp[o * 4 + 2] = glow; shp[o * 4 + 3] = s[6];
+        flw[o * 2] = s[7]; flw[o * 2 + 1] = s[8];
       }
       if (i > 0) {
         const j = this.indices;
@@ -127,7 +136,7 @@ export class Strokes {
 
   end() {
     const g = this.geometry;
-    for (const name of ['position', 'color', 'shape']) {
+    for (const name of ['position', 'color', 'shape', 'flow']) {
       const a = g.getAttribute(name);
       a.clearUpdateRanges();
       a.addUpdateRange(0, this.points * 2 * a.itemSize);

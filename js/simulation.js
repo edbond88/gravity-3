@@ -34,8 +34,11 @@ function recordTrails(list, t) {
   for (const b of list) {
     const tr = b.trail;
     const last = tr[tr.length - 1];
-    if (!last || Math.hypot(b.x - last.x, b.y - last.y) > TRAIL_MIN_DIST || t - last.t > 0.1) {
-      tr.push({ x: b.x, y: b.y, t, v: Math.hypot(b.vx, b.vy), e: escapeRatio(list, list.indexOf(b), softening) });
+    const step = last ? Math.hypot(b.x - last.x, b.y - last.y) : 0;
+    if (!last || step > TRAIL_MIN_DIST || t - last.t > 0.1) {
+      // d: distance travelled, so a tail's texture stays put where it was left
+      const d = last ? last.d + step : 0;
+      tr.push({ x: b.x, y: b.y, t, d, v: Math.hypot(b.vx, b.vy), e: escapeRatio(list, list.indexOf(b), softening) });
       if (tr.length > TRAIL_MAX_POINTS) tr.shift();
     }
   }
