@@ -89,8 +89,8 @@ function advance(years) {
   pruneTrails(bodies, simTime);
 }
 
-// Close encounters → bass thump at the moment of closest approach. After a
-// thump the pair re-arms once it has moved apart to REARM_FACTOR × that distance.
+// Close encounters → a fly-by sound at the moment of closest approach. After a
+// pass the pair re-arms once it has moved apart to REARM_FACTOR × that distance.
 const ENCOUNTER_NEAR = 1.2;  // AU — closest approach must be below this
 const REARM_FACTOR = 1.5;
 const PAIRS = [[0, 1], [1, 2], [0, 2]];
@@ -113,12 +113,30 @@ function detectEncounters() {
       const x = toScreenX((a.x * a.mass + b.x * b.mass) / (a.mass + b.mass));
       const pan = Math.max(-1, Math.min(1, (x / width) * 2 - 1)) * 0.7;
       const pitch = Math.sqrt(2.4 / (a.mass + b.mass)); // heavier pair → lower
-      sound.thump(intensity, pan, pitch);
+      sound.flyby(intensity, pan, pitch);
       spawnBurst(a, b, (a.x * a.mass + b.x * b.mass) / (a.mass + b.mass), (a.y * a.mass + b.y * b.mass) / (a.mass + b.mass), intensity);
     }
     e.falling = r < e.prev;
     e.prev = r;
   });
+}
+
+// Each star drones: heavier stars lower — an open chord of A1, E2, A2 — and
+// every voice brightens and swells as its star speeds up.
+const HUM_NOTES = [55, 82.41, 110];
+let humSpeed = 0; // the stars' average speed, followed slowly
+
+function updateHum(realDt) {
+  if (!sound.enabled || !bodies.length) return;
+  const avg = bodies.reduce((s, b) => s + Math.hypot(b.vx, b.vy), 0) / bodies.length;
+  humSpeed = humSpeed ? humSpeed + (avg - humSpeed) * (1 - Math.exp(-realDt / 4)) : avg;
+  const byMass = bodies.map((b, i) => i).sort((i, j) => bodies[j].mass - bodies[i].mass);
+  const stars = bodies.map((b, i) => ({
+    root: HUM_NOTES[byMass.indexOf(i)],
+    speed: Math.hypot(b.vx, b.vy) / (humSpeed || 1),
+    pan: Math.max(-1, Math.min(1, (toScreenX(b.x) / width) * 2 - 1)) * 0.7,
+  }));
+  sound.hum(stars, !paused && !restarting);
 }
 
 function reset() {
@@ -130,6 +148,7 @@ function reset() {
   bursts = [];
   resetDust();
   simTime = 0;
+  humSpeed = 0;
   camera.scale = 0;
   hudTimer = 0;
 }

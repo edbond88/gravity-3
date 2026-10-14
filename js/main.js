@@ -24,6 +24,7 @@ function frame(now) {
     if (!restarting && !drag && systemDissolved(bodies)) restart();
   }
   updateCamera(realDt);
+  updateHum(realDt);
   pruneBursts();
   renderer.render(frameNow, realDt);
   updateHud(realDt);

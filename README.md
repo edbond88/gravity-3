@@ -19,7 +19,7 @@ An interactive simulation of three stars pulling on each other with gravity — 
 - **Gravity field** — show the potential the stars move in, as a rubber sheet pulled into wells or as a heat map with isolines. Points where the stars' pulls cancel out are marked.
 - **Energy** — colour the trails by energy to see whether each star is bound, at escape speed or already escaping. The energy drift |ΔE/E₀| at the top shows how accurately the integrator conserves energy.
 - **Drag stars** — grab any star. Paused, move it somewhere else; running, hold it while the others orbit around it, and throw it — when let go it keeps the speed you gave it. The centre of mass is recomputed.
-- **Sound and light** — close encounters thump, panned to where they happen, and flash with a spray of sparks.
+- **Sound and light** — each star drones, brightening as it speeds up; close encounters whoosh past, panned to where they happen, and flash with a spray of sparks.
 - **Dust** — the system flies through an interstellar cloud: a quarter of a million weightless grains blow in from the left like a wind and move through the stars' gravity by the same physics, computed on the GPU. The stars bend the stream, focus it into bright wakes behind them and leave shadows where they sweep it up.
 - **Shock waves** — each close encounter sends out a wave that bends the stars, trails and field lines behind it, like heat haze. It can be turned off separately from the flashes.
 - **Glow** — bright light bleeds softly into its surroundings, like in a camera (bloom): star cores, white-hot trails and flashes shine.
