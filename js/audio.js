@@ -9,9 +9,10 @@ const sound = (() => {
   let reverb = null;
   let noiseBuffer = null;
   let enabled = false;
-  let voices = 0;
+  let voices = []; // encounter sounds still ringing: { start, fader, sources }
+  let hums = [];
 
-  const MAX_VOICES = 6;      // at high time speeds encounters come in bursts
+  const MAX_VOICES = 8;      // at high time speeds encounters come in bursts
   const REVERB_SECONDS = 3.2;
 
   // Notes an encounter can ring at: A minor pentatonic, A2…A4. Any of them
@@ -43,14 +44,67 @@ const sound = (() => {
     wet.gain.value = 0.5;
     reverb.connect(wet).connect(master);
 
-    // a short burst of white noise for the attack of each thump
-    noiseBuffer = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate);
+    // white noise: looped, the encounters' whoosh and the drones' air —
+    // long enough that the loop can't be heard
+    noiseBuffer = ac.createBuffer(1, ac.sampleRate * 6, ac.sampleRate);
     const data = noiseBuffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+
+    hums = [0, 1, 2].map((i) => createHum(i));
   }
 
-  // A large, dark space: stereo noise that decays exponentially, smoothed more
-  // and more over time so the tail loses its highs the way real rooms do.
+  // One star's voice: a deep drone. Two sines a hair apart beat slowly against
+  // each other, with a sine an octave below and quiet upper partials, all
+  // through a low-pass that a very slow LFO keeps breathing. On top, a band of
+  // filtered noise — the "air" — that rises as the star speeds up. Silent until
+  // hum() turns it up.
+  function createHum(i) {
+    const out = ac.createStereoPanner();
+    out.connect(master);
+    const send = ac.createGain();
+    send.gain.value = 1.2;
+    out.connect(send).connect(reverb);
+    const gain = ac.createGain();
+    gain.gain.value = 0;
+    gain.connect(out);
+
+    const filter = ac.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 200;
+    filter.Q.value = 0.5;
+    filter.connect(gain);
+    const lfo = ac.createOscillator();
+    lfo.frequency.value = 0.05 + 0.03 * i; // each voice breathes at its own pace
+    const depth = ac.createGain();
+    depth.gain.value = 70;
+    lfo.connect(depth).connect(filter.frequency);
+    lfo.start();
+
+    const PARTIALS = [[1, 0.5], [1.0035, 0.4], [0.5, 0.35], [2, 0.12], [3, 0.05]];
+    const oscs = PARTIALS.map(([ratio, level]) => {
+      const osc = ac.createOscillator();
+      osc.type = 'sine';
+      const g = ac.createGain();
+      g.gain.value = level;
+      osc.connect(g).connect(filter);
+      osc.start();
+      return { osc, ratio };
+    });
+
+    const air = ac.createBufferSource();
+    air.buffer = noiseBuffer;
+    air.loop = true;
+    const band = ac.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 6;
+    const airGain = ac.createGain();
+    airGain.gain.value = 0;
+    air.connect(band).connect(airGain).connect(gain);
+    air.start();
+
+    return { out, gain, filter, oscs, band, airGain };
+  }
+
   function impulseResponse() {
     const rate = ac.sampleRate;
     const n = Math.floor(rate * REVERB_SECONDS);
@@ -85,73 +139,128 @@ const sound = (() => {
     return SCALE.reduce((best, f) => (Math.abs(Math.log(f / freq)) < Math.abs(Math.log(best / freq)) ? f : best));
   }
 
-  // A soft, deep impact with a ringing tone in a large space.
+  // A close pass, in the drones' key: a whoosh of air that sweeps down and
+  // across, like something flying by; a soft, deep swell under it; and a
+  // singing-bowl tone that beats slowly and melts into the reverb.
   //   intensity: 0..1 — loudness
   //   pan:      -1..1 — stereo position
   //   pitch:     multiplier, < 1 is lower (heavier pair)
-  function thump(intensity, pan, pitch) {
-    if (!enabled || !ac || voices >= MAX_VOICES) return;
+  function flyby(intensity, pan, pitch) {
+    if (!enabled || !ac) return;
     const t = ac.currentTime + 0.01;
-    // quieter when others are still ringing, so overlaps don't pile up
-    const vol = (0.3 + 0.7 * intensity) / (1 + 0.6 * voices);
-    const end = t + 3;
-    voices++;
+    // every encounter is heard: when too many are ringing, the oldest — by
+    // now mostly its fading tail — makes room
+    if (voices.length >= MAX_VOICES) release(voices.shift(), t);
+    // quieter when others have just started, so bursts don't pile up
+    const recent = voices.filter((v) => t - v.start < 1.5).length;
+    const vol = (0.3 + 0.7 * intensity) / (1 + 0.6 * recent);
+    const end = t + 7;
 
+    const fader = ac.createGain(); // lets the whole voice be faded out early
+    fader.connect(master);
+    const send = ac.createGain(); // to the reverb
+    send.gain.value = 1;
+    fader.connect(send).connect(reverb);
     const out = ac.createStereoPanner();
     out.pan.value = pan;
-    out.connect(master);
-    const send = ac.createGain(); // to the reverb
-    send.gain.value = 0.6;
-    out.connect(send).connect(reverb);
+    out.connect(fader);
 
     const sources = [];
 
-    // body: a sine that drops quickly in pitch, like a soft kick drum
-    const f0 = 46 * pitch;
-    const body = ac.createOscillator();
-    body.type = 'sine';
-    body.frequency.setValueAtTime(f0 * 2.6, t);
-    body.frequency.exponentialRampToValueAtTime(f0, t + 0.09);
-    const bodyGain = ac.createGain();
-    envelope(bodyGain.gain, t, 0.006, 0.7 + 0.5 * intensity, vol * 0.9);
-    body.connect(bodyGain).connect(out);
-    sources.push(body);
+    // whoosh: noise through a resonant band that falls, Doppler-like, while
+    // it passes from one side to the other
+    const whoosh = ac.createBufferSource();
+    whoosh.buffer = noiseBuffer;
+    whoosh.loop = true;
+    const band = ac.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 2.5;
+    const sweep = 0.9 + 0.6 * intensity; // s — closer passes sweep longer
+    band.frequency.setValueAtTime(1800 * pitch, t);
+    band.frequency.exponentialRampToValueAtTime(140 * pitch, t + sweep);
+    const across = ac.createStereoPanner();
+    across.pan.setValueAtTime(Math.max(-1, pan - 0.5), t);
+    across.pan.linearRampToValueAtTime(Math.min(1, pan + 0.5), t + sweep);
+    const whooshGain = ac.createGain();
+    whooshGain.gain.setValueAtTime(0, t);
+    whooshGain.gain.linearRampToValueAtTime(vol * 0.35, t + 0.12);
+    whooshGain.gain.setTargetAtTime(0, t + 0.12, sweep / 3);
+    whoosh.connect(band).connect(whooshGain).connect(across).connect(fader);
+    sources.push(whoosh);
 
-    // attack: a brief, dark puff of noise so the impact has some texture
-    const puff = ac.createBufferSource();
-    puff.buffer = noiseBuffer;
-    const puffFilter = ac.createBiquadFilter();
-    puffFilter.type = 'lowpass';
-    puffFilter.frequency.setValueAtTime(900, t);
-    puffFilter.frequency.exponentialRampToValueAtTime(120, t + 0.12);
-    const puffGain = ac.createGain();
-    envelope(puffGain.gain, t, 0.004, 0.12, vol * 0.25);
-    puff.connect(puffFilter).connect(puffGain).connect(out);
-    sources.push(puff);
+    // swell: a low sine on the key's root that settles a little in pitch
+    const root = nearestNote(110 * pitch) / 2;
+    const swell = ac.createOscillator();
+    swell.type = 'sine';
+    swell.frequency.setValueAtTime(root * 1.06, t);
+    swell.frequency.setTargetAtTime(root, t, 0.25);
+    const swellGain = ac.createGain();
+    envelope(swellGain.gain, t, 0.08, 2 + 1.5 * intensity, vol * 0.7);
+    swell.connect(swellGain).connect(out);
+    sources.push(swell);
 
-    // tone: a quiet bell-like note — a fundamental and an inharmonic partial
-    const note = nearestNote(165 * pitch);
-    for (const [ratio, level, decay] of [[1, 0.13, 2.4], [2.76, 0.035, 0.9], [5.4, 0.012, 0.4]]) {
-      const osc = ac.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.value = note * ratio;
-      const g = ac.createGain();
-      g.gain.setValueAtTime(0, t); // silent until its envelope starts
-      envelope(g.gain, t + 0.015, 0.01, decay, vol * level);
-      osc.connect(g).connect(out);
-      sources.push(osc);
+    // singing bowl: inharmonic partials, each a pair a hair apart so it beats
+    const note = nearestNote(220 * pitch);
+    const PARTIALS = [[1, 0.09, 5], [2.71, 0.03, 3], [5.15, 0.012, 1.6]];
+    for (const [ratio, level, decay] of PARTIALS) {
+      for (const detune of [1, 1.0025]) {
+        const osc = ac.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = note * ratio * detune;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0, t); // silent until its envelope starts
+        envelope(g.gain, t + 0.05, 0.15, decay, vol * level);
+        osc.connect(g).connect(out);
+        sources.push(osc);
+      }
     }
 
     for (const src of sources) {
       src.start(t);
       src.stop(end);
     }
-    body.onended = () => { voices--; };
+    const voice = { start: t, fader, sources };
+    voices.push(voice);
+    swell.onended = () => { voices = voices.filter((v) => v !== voice); };
+  }
+
+  function release(voice, t) {
+    voice.fader.gain.setTargetAtTime(0, t, 0.05);
+    for (const src of voice.sources) src.stop(t + 0.3);
+  }
+
+  // The stars' voices, updated every frame.
+  //   stars: [{ root, speed, pan }] — root: the star's note in Hz; speed: its
+  //          speed relative to the others' average (1 = average)
+  //   on:    false fades them all out (paused, restarting)
+  // A drone barely changes pitch: speed shows in its brightness, its swell
+  // and the air, all following the star over a second or two.
+  const HUM_GLIDE = 0.6;  // s — time constant; settles in about three of these
+  function hum(stars, on) {
+    if (!enabled || !ac) return;
+    const t = ac.currentTime;
+    hums.forEach((h, i) => {
+      const s = stars[i];
+      if (!s || !on) {
+        h.gain.gain.setTargetAtTime(0, t, 0.5);
+        return;
+      }
+      const r = Math.max(0.3, Math.min(3, s.speed));
+      const fast = Math.min(1, r / 2.5);
+      const freq = s.root * r ** 0.06; // twice as fast → under a semitone higher
+      for (const { osc, ratio } of h.oscs) osc.frequency.setTargetAtTime(freq * ratio, t, HUM_GLIDE * 2);
+      h.filter.frequency.setTargetAtTime(160 + 700 * fast ** 1.5, t, HUM_GLIDE);
+      h.band.frequency.setTargetAtTime(freq * 6, t, HUM_GLIDE * 2);
+      h.airGain.gain.setTargetAtTime(0.5 * fast ** 2, t, HUM_GLIDE);
+      h.gain.gain.setTargetAtTime(0.045 * (0.5 + 0.5 * fast), t, HUM_GLIDE);
+      h.out.pan.setTargetAtTime(s.pan, t, HUM_GLIDE);
+    });
   }
 
   return {
     setEnabled,
-    thump,
+    flyby,
+    hum,
     get enabled() { return enabled; },
   };
 })();

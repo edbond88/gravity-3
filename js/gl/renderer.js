@@ -54,7 +54,7 @@ export class Renderer {
     this.sky.update(now);
     this.field.update(o);
     this.dust.update(o, this.gl, this.camera);
-    this.trails.update(o);
+    this.trails.update(now, o);
     this.flashes.update(o);
     this.stars.update(now, o);
     const waves = this.flashes.waves;
